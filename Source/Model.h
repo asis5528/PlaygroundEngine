@@ -1,0 +1,29 @@
+#pragma once
+#include "Graphics/Mesh.h"
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/mesh.h>
+#include <assimp/scene.h>
+#include <map>
+#include "AnimationData.h"
+#include "Animation.h"
+class Model
+{
+public:
+	std::vector<Mesh> meshes;
+	std::vector < glm::mat4> transformations;
+	std::vector<Animation> animations;
+	const aiScene* m_pScene;
+	Model(const char* path);
+	void processNode(aiNode* node, const aiScene* scene);
+    void processMesh(aiMesh* mesh, const aiScene* scene, Mesh& meshbuffer);
+	inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* from);
+	void readAnimation(const aiNode* pNode, AnimationData* aData);
+	//void readAnimation(const aiNode* pNode);
+	const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const std::string NodeName);
+	std::map<std::string, int> m_BoneMapping;
+	glm::mat4 globalInverseTransform;
+	int m_NumBones = 0;
+	std::vector<BoneInfo> m_BoneInfo;
+};
+
