@@ -35,7 +35,7 @@ void VulkanBase::init(GLFWwindow* window) {
     createCommandBuffers();
 
 
-    offscreenbuffer = new Framebuffer(vulkandevice,swapChain->swapChainExtent.width, swapChain->swapChainExtent.height,msaaSamples,swapChain->swapChainImageFormat, utils::findDepthFormat(vkPhysicalDevice));
+   // offscreenbuffer = new Framebuffer(vulkandevice,swapChain->swapChainExtent.width, swapChain->swapChainExtent.height,msaaSamples,swapChain->swapChainImageFormat, utils::findDepthFormat(vkPhysicalDevice));
    
     
   vbuffer = new  VBuffer(vulkandevice);
@@ -48,10 +48,10 @@ void VulkanBase::recreate() {
   //  swapChain->create();
     swapChain->create();
     createCommandBuffers();
-    offscreenbuffer->width = swapChain->swapChainExtent.width;
-    offscreenbuffer->height = swapChain->swapChainExtent.height;
-    offscreenbuffer->recreate();
-    offscreenbuffer->colorFormat = swapChain->swapChainImageFormat;
+   // offscreenbuffer->width = swapChain->swapChainExtent.width;
+  //  offscreenbuffer->height = swapChain->swapChainExtent.height;
+  //  offscreenbuffer->recreate();
+  //  offscreenbuffer->colorFormat = swapChain->swapChainImageFormat;
     imagesInFlight.resize(swapChain->swapChainImages.size(), VK_NULL_HANDLE);
 }
 
@@ -327,7 +327,7 @@ VulkanBase::VulkanBase()
 
 VulkanBase::~VulkanBase()
 {
-    delete offscreenbuffer;
+  //  delete offscreenbuffer;
     delete swapChain;
 
 

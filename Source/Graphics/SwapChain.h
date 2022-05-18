@@ -23,6 +23,7 @@ public:
 	bool framebufferResized = false;
 	SwapChain(VkPhysicalDevice &physicalDevice,VkDevice &device,VkSurfaceKHR &surface,GLFWwindow* &window, VkQueue &queue, VkSampleCountFlagBits msaaSamples);
 	~SwapChain();
+	void cleanSwapChain();
 	void create();
 	void beginRenderPass(VkCommandBuffer commandBuffer,  unsigned int index);
 

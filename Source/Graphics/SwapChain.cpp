@@ -17,17 +17,22 @@ SwapChain::SwapChain(VkPhysicalDevice &physicalDevice, VkDevice& device, VkSurfa
 SwapChain::~SwapChain()
 {
   
+    cleanSwapChain();
+
+}
+
+void SwapChain::cleanSwapChain()
+{
     framebufferColorImage->destroy();
 
     framebufferDepthImage->destroy();
     for (auto framebuffer : swapChainFramebuffers) {
         vkDestroyFramebuffer(device, framebuffer, nullptr);
     }
-    for (VkImageView& view : swapChainImageViews){
+    for (VkImageView& view : swapChainImageViews) {
         vkDestroyImageView(device, view, nullptr);
-        }
+    }
     vkDestroyRenderPass(device, renderPass, nullptr);
-
 }
 
 void SwapChain::create() {
@@ -103,7 +108,8 @@ SwapChainSupportDetails SwapChain::querySwapChainSupport(VkPhysicalDevice device
 
 VkSurfaceFormatKHR SwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
     for (const auto& availableFormat : availableFormats) {
-        if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+        
+        if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             return availableFormat;
         }
     }

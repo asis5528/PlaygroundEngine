@@ -3,6 +3,7 @@
 #include "../../Imgui/imgui.h"
 #include "../../Imgui/imgui_impl_glfw.h"
 #include "../../Imgui/imgui_impl_vulkan.h"
+#include "../../Imgui/imgui_internal.h"
 
 class VulkanImgui
 {
@@ -19,7 +20,9 @@ public:
 	VulkanImgui(VulkanBase* base, GLFWwindow* window);
 	~VulkanImgui();
 	void recreate();
+	void cleanFrameBuffers();
 	void init();
+	void newFrame();
 	void draw(uint32_t imageIndex);
 private:
 	void createImguiRenderPass();

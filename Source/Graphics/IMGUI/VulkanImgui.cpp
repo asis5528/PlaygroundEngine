@@ -17,15 +17,19 @@ VulkanImgui::VulkanImgui(VulkanBase* base, GLFWwindow* window) {
 
 VulkanImgui::~VulkanImgui()
 {
-    for (VkFramebuffer& fbuffer : imguiFramebuffers) {
-        vkDestroyFramebuffer(base->vulkandevice->device, fbuffer, nullptr);
-    }
+    cleanFrameBuffers();
    
-    vkDestroyRenderPass(base->vulkandevice->device, imGuiRenderPass, nullptr);
+   
     vkDestroyDescriptorPool(base->vulkandevice->device,imguiDescriptorPool, nullptr);
     ImGui_ImplVulkan_Shutdown();
 }
-
+void VulkanImgui::cleanFrameBuffers()
+{
+    for (VkFramebuffer& fbuffer : imguiFramebuffers) {
+        vkDestroyFramebuffer(base->vulkandevice->device, fbuffer, nullptr);
+    }
+    vkDestroyRenderPass(base->vulkandevice->device, imGuiRenderPass, nullptr);
+}
 void VulkanImgui::init() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();  (void)io;
@@ -49,6 +53,13 @@ void VulkanImgui::init() {
 
    
 }
+
+void VulkanImgui::newFrame() {
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
 void VulkanImgui::draw(uint32_t imageIndex)
 {
     VkCommandBufferBeginInfo beginInfo{};
@@ -81,12 +92,15 @@ void VulkanImgui::draw(uint32_t imageIndex)
     }
 }
 void VulkanImgui::recreate() {
+    createImguiRenderPass();
     createFramebuffers();
+   
 }
+
 void VulkanImgui::createImguiRenderPass()
 {
     VkAttachmentDescription attachment = {};
-    attachment.format = base->swapChain->swapChainImageFormat;
+    attachment.format = VK_FORMAT_B8G8R8A8_UNORM;
     attachment.samples = VK_SAMPLE_COUNT_1_BIT;
     attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;

@@ -1,9 +1,11 @@
 #include "Model.h"
 #include <iostream>
+#include <glm/gtx/matrix_decompose.hpp>
 
 
-Model::Model(const char* path) {
+Model::Model(const char* path, const Scene *enscene) {
     Assimp::Importer importer;
+    scObjectSize = enscene->objects.size();
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
@@ -12,8 +14,78 @@ Model::Model(const char* path) {
         return;
     }
     this->m_pScene = scene;
+    objects;
+    Object obj;
+    //Node rootnode;
+    aiMatrix4x4 m_GlobalInverseTransform = m_pScene->mRootNode->mTransformation;
+    aiVector3D trnas;
+    aiVector3D rotate;
+    aiVector3D sc; 
+    m_GlobalInverseTransform.Decompose(sc, rotate,trnas);
+    glm::mat4 dec = aiMatrix4x4ToGlm(&m_GlobalInverseTransform);
+    glm::vec3 scale;
+    glm::quat r;
+    glm::vec3 trans;
+    glm::vec3 skew;
+    glm::vec4 pers;
+    int upAxis = 0;
     
-    processNode(scene->mRootNode, scene);
+    if (scene->mMetaData)
+    {
+        int32_t UpAxis = 1, UpAxisSign = 1, FrontAxis = 2, FrontAxisSign = 1, CoordAxis = 0, CoordAxisSign = 1;
+        double UnitScaleFactor = 1.0;
+        for (unsigned MetadataIndex = 0; MetadataIndex < scene->mMetaData->mNumProperties; ++MetadataIndex)
+        {
+            if (strcmp(scene->mMetaData->mKeys[MetadataIndex].C_Str(), "UpAxis") == 0)
+            {
+                scene->mMetaData->Get<int32_t>(MetadataIndex, UpAxis);
+            }
+            if (strcmp(scene->mMetaData->mKeys[MetadataIndex].C_Str(), "UpAxisSign") == 0)
+            {
+                scene->mMetaData->Get<int32_t>(MetadataIndex, UpAxisSign);
+            }
+            if (strcmp(scene->mMetaData->mKeys[MetadataIndex].C_Str(), "FrontAxis") == 0)
+            {
+                scene->mMetaData->Get<int32_t>(MetadataIndex, FrontAxis);
+            }
+            if (strcmp(scene->mMetaData->mKeys[MetadataIndex].C_Str(), "FrontAxisSign") == 0)
+            {
+                scene->mMetaData->Get<int32_t>(MetadataIndex, FrontAxisSign);
+            }
+            if (strcmp(scene->mMetaData->mKeys[MetadataIndex].C_Str(), "CoordAxis") == 0)
+            {
+                scene->mMetaData->Get<int32_t>(MetadataIndex, CoordAxis);
+            }
+            if (strcmp(scene->mMetaData->mKeys[MetadataIndex].C_Str(), "CoordAxisSign") == 0)
+            {
+                scene->mMetaData->Get<int32_t>(MetadataIndex, CoordAxisSign);
+            }
+            if (strcmp(scene->mMetaData->mKeys[MetadataIndex].C_Str(), "UnitScaleFactor") == 0)
+            {
+                scene->mMetaData->Get<double>(MetadataIndex, UnitScaleFactor);
+            }
+        }
+
+        aiVector3D upVec, forwardVec, rightVec;
+
+        upVec[UpAxis] = UpAxisSign * (float)UnitScaleFactor;
+        forwardVec[FrontAxis] = FrontAxisSign * (float)UnitScaleFactor;
+        rightVec[CoordAxis] = CoordAxisSign * (float)UnitScaleFactor;
+
+        aiMatrix4x4 mat(rightVec.x, rightVec.y, rightVec.z, 0.0f,
+            upVec.x, upVec.y, upVec.z, 0.0f,
+            forwardVec.x, forwardVec.y, forwardVec.z, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+      //  scene->mRootNode->mTransformation = mat;
+    }
+  //  glm::mat4 r(1.0);
+  //  r = glm::rotate(r, 3.1415f / 4.f, glm::vec3(1, 0, 0));
+    aiMatrix4x4 rot;
+    rot.Rotation(3.1415 / 2., aiVector3D(1, 0, 0), rot);
+
+    scene->mRootNode->mTransformation = scene->mRootNode->mTransformation*rot;
+  //  glm::decompose(dec, scale, r, trans,skew,pers);
+    processNode(scene->mRootNode, scene, this->rootNode);
   //  animation = Animation(animation);
     if (scene->HasAnimations()) {
         AnimationData animData;
@@ -38,37 +110,65 @@ Model::Model(const char* path) {
     float k = 1.;
 }
 
-void Model::processNode(aiNode* node, const aiScene* scene)
+void Model::processNode(aiNode* node, const aiScene* scene,Node & nodechild)
 {
     // process each mesh located at the current node
+   // object.meshID.resize(node->mNumMeshes);
+
+    Object childObj;
+    Node childNode;
+    if (node->mNumMeshes > 1) {
+        float k = 1.;
+    }
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         // the node object only contains indices to index the actual objects in the scene. 
         // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
-        const char* stt = node->mName.C_Str();
-        const char* strr = "defaultobject";
-        const char* strk = "defaultobject";
-        if (std::string(node->mName.C_Str()) == std::string(strr)) {
-            float k = 0.0;
-        }
+      //  const char* stt = node->mName.C_Str();
+      //  const char* strr = "defaultobject";
+      //  const char* strk = "defaultobject";
+       // if (std::string(node->mName.C_Str()) == std::string(strr)) {
+        //    float k = 0.0;
+        //}
+
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
         Mesh meshbuffer;
+        meshbuffer.name = mesh->mName.C_Str();
         processMesh(mesh, scene, meshbuffer);
         meshes.push_back(meshbuffer);
-        const aiMatrix4x4 mat = node->mTransformation;
-        glm::mat4 transformation = aiMatrix4x4ToGlm(&mat);
-        transformations.push_back(transformation);
+        childObj.meshID.push_back(meshes.size()-1);
+        childObj.hasMesh = true;
+      //  const aiMatrix4x4 mat = node->mTransformation;
+       // const aiMatrix4x4 mg = m_pScene->mRootNode->mTransformation;
+
+       // glm::mat4 transformation = aiMatrix4x4ToGlm(&mg)*aiMatrix4x4ToGlm(&mat);
+       // transformations.push_back(transformation);
        
     }
+    const aiMatrix4x4 mat = node->mTransformation; 
+    
+  //  aiMatrix4x4 newmat = mat;
+   // mat.Rotation(3.1315 / 2., aiVector3D(1, 0, 0), newmat);
+
+
+    glm::mat4 transformation = aiMatrix4x4ToGlm(&mat);
+   //transformation = glm::rotate(transformation, 3.1315f / 2.f, glm::vec3(0, -1, 1));
+  
+    childObj.ModelMatrix = transformation;
+    childObj.name = node->mName.C_Str();
+    //object.child.push_back(childObj);
+    objects.push_back(childObj);
+    childNode.ObjectID = (objects.size() - 1)+(scObjectSize);
+    nodechild.children.push_back(childNode);
     // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
         if (std::string(node->mChildren[i]->mName.C_Str()) != std::string("defaultobject")) {
-            processNode(node->mChildren[i], scene);
+            processNode(node->mChildren[i], scene, nodechild.children[nodechild.children.size()-1]);
         }
     }
-
+   
 }
 void Model::processMesh(aiMesh* mesh, const aiScene* scene, Mesh& meshbuffer)
 {
@@ -236,7 +336,7 @@ void Model::readAnimation(const aiNode* pNode, AnimationData* aData) {
     }
     for (int i = 0; i < pNode->mNumChildren; i++) {
         std::cout << "parent : " << pNode->mName.data << " --- child : " << pNode->mChildren[i]->mName.data << "\n";
-
+       
         if (pNodeAnim) {
             readAnimation(pNode->mChildren[i], &aData->childAnimationData[aData->childAnimationData.size() - 1]);
 

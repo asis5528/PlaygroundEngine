@@ -29,8 +29,15 @@ void GraphicsPipeline::setupPipeline(PipelineInput  pipelineInput) {
 
     // static VkVertexInputBindingDescription bindingDescription = Vertex::getBindingDescription();
     // static std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = Vertex::getAttributeDescriptions();
-    infoLocal.bindingDescription = Vertex::getBindingDescription();
-    infoLocal.attributeDescriptions = Vertex::getAttributeDescriptions();
+    if (pipelineInput.skinned) {
+        infoLocal.bindingDescription = SkinnedVertex::getBindingDescription();
+        infoLocal.attributeDescriptions = SkinnedVertex::getAttributeDescriptions();
+    }
+    else {
+        infoLocal.bindingDescription = Vertex::getBindingDescription();
+        infoLocal.attributeDescriptions = Vertex::getAttributeDescriptions();
+    }
+  
     infoLocal.vertexInputInfo.vertexBindingDescriptionCount = 1;
     infoLocal.vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(infoLocal.attributeDescriptions.size());
     infoLocal.vertexInputInfo.pVertexBindingDescriptions = &infoLocal.bindingDescription;
@@ -104,14 +111,6 @@ void GraphicsPipeline::setupPipeline(PipelineInput  pipelineInput) {
     infoLocal.colorBlending.blendConstants[2] = 0.0f;
     infoLocal.colorBlending.blendConstants[3] = 0.0f;
 
-
-
-
-
-    //VkGraphicsPipelineCreateInfo pipelineInfo{};
-
-
-
     //this->pipelineInput = pipelineInput;
     createDescriptorSetLayout();
 
@@ -124,11 +123,9 @@ void GraphicsPipeline::setupPipeline(PipelineInput  pipelineInput) {
         throw std::runtime_error("failed to create pipeline layout!");
     }
 
-
-     
 }
 GraphicsPipeline::~GraphicsPipeline() {
-    vkDestroyPipeline(pipelineInput.device, graphicsPipeline, nullptr);
+    clean();
     vkDestroyShaderModule(pipelineInput.device, infoLocal.vertShaderStageInfo.module, nullptr);
     vkDestroyShaderModule(pipelineInput.device, infoLocal.fragShaderStageInfo.module, nullptr);
     vkDestroyDescriptorSetLayout(pipelineInput.device, descriptorSetLayout, nullptr);
@@ -142,6 +139,11 @@ void GraphicsPipeline ::recreatePipeline(VkExtent2D resolution, VkRenderPass ren
     infoLocal.viewport.height = (float)resolution.height;
     infoLocal.scissor.extent = resolution;
     createGraphicsPipeline();
+}
+void GraphicsPipeline::clean()
+{
+    vkDestroyPipeline(pipelineInput.device, graphicsPipeline, nullptr);
+   
 }
 void GraphicsPipeline::createGraphicsPipeline() {
     
@@ -220,23 +222,62 @@ VkVertexInputBindingDescription Vertex::getBindingDescription() {
 
     return bindingDescription;
 }
-std::array<VkVertexInputAttributeDescription, 3> Vertex::getAttributeDescriptions() {
-    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
-
+std::vector<VkVertexInputAttributeDescription> Vertex::getAttributeDescriptions() {
+    std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
+    attributeDescriptions.resize(3);
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
     attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(Vertex, pos);
+    attributeDescriptions[0].offset = offsetof(Vertex, Vertex::pos);
 
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Vertex, normal);
+    attributeDescriptions[1].offset = offsetof(Vertex, Vertex::normal);
 
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;
     attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+    attributeDescriptions[2].offset = offsetof(Vertex, Vertex::texCoord);
+
+    return attributeDescriptions;
+
+}
+
+VkVertexInputBindingDescription SkinnedVertex::getBindingDescription() {
+    VkVertexInputBindingDescription bindingDescription{};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof(SkinnedVertex);
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    return bindingDescription;
+}
+std::vector<VkVertexInputAttributeDescription> SkinnedVertex::getAttributeDescriptions() {
+    std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
+    attributeDescriptions.resize(5);
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[0].offset = offsetof(SkinnedVertex, SkinnedVertex::pos);
+
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(SkinnedVertex, SkinnedVertex::normal);
+
+    attributeDescriptions[2].binding = 0;
+    attributeDescriptions[2].location = 2;
+    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[2].offset = offsetof(SkinnedVertex, SkinnedVertex::texCoord);
+
+    attributeDescriptions[3].binding = 0;
+    attributeDescriptions[3].location = 3;
+    attributeDescriptions[3].format = VK_FORMAT_R32G32B32A32_UINT;;
+    attributeDescriptions[3].offset = offsetof(SkinnedVertex, SkinnedVertex::IDs);
+
+    attributeDescriptions[4].binding = 0;
+    attributeDescriptions[4].location = 4;
+    attributeDescriptions[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    attributeDescriptions[4].offset = offsetof(SkinnedVertex, SkinnedVertex::Weights);
 
     return attributeDescriptions;
 

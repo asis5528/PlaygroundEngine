@@ -15,6 +15,10 @@ Framebuffer::Framebuffer(VulkanDevice *vulkandevice , uint32_t width, uint32_t h
 }
 Framebuffer::~Framebuffer()
 {
+    clean();
+    
+}
+void Framebuffer::clean() {
     ColorImage->destroy();
     DepthImage->destroy();
     MultisampledColorImage->destroy();

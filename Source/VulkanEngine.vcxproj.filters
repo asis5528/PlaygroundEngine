@@ -22,6 +22,7 @@
     <None Include="shaders\quad.vert" />
     <None Include="shaders\quad.frag" />
     <None Include="..\..\engine\game-engine\imgui.ini" />
+    <None Include="shaders\skinned.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -90,6 +91,24 @@
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SceneObjects.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Loader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MathUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\EditorGui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Imgui\imconfig.h">
@@ -134,5 +153,12 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="quad.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneObjects.h" />
+    <ClInclude Include="Loader.h" />
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="MathUtils.h" />
+    <ClInclude Include="AnimationData.h" />
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="GUI\EditorGui.h" />
   </ItemGroup>
 </Project>

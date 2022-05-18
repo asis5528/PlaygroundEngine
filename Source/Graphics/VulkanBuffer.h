@@ -8,7 +8,8 @@
 struct VBuffer {
 	VulkanDevice* vulkandevice;
 	VBuffer(VulkanDevice* vulkandevice);
-	void createVertexBuffer(Mesh& mesh);
+	void createVertexBuffer(Mesh& mesh); 
+	void createSkinnedVertexBuffer(Mesh& mesh);
 	void createIndexBuffer(Mesh& mesh);
 	std::vector<UBO> createUniformBuffers(std::vector<uint64_t> Buffersize);
 //	std::vector 

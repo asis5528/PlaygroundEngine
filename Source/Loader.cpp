@@ -11,11 +11,50 @@ void Loader::load(int path_count, const char* paths[])
 	vkDeviceWaitIdle(base->device);
 	for (int i = 0; i < path_count; i++) {
 		const char* path = paths[i];
-        Model modelData = Model(path);
+        Model modelData = Model(path, scene );
+        for (Node& node : modelData.rootNode.children) {
+            scene->rootNode.children.push_back(node);
+        }
         for (Animation& animation : modelData.animations) {
             this->scene->animations.push_back(animation);
         }
         
+        for (Object &object:modelData.objects) {
+            object.textureID = 0;
+          //  object.ModelMatrix = glm::translate(object.ModelMatrix, glm::vec3(scene->objects.size() * 2., 0, 0));
+            
+            if(object.hasMesh){
+                for (int i = 0; i < object.meshID.size(); i++) {
+                    Mesh mesh = modelData.meshes[object.meshID[i]];
+
+                    if (mesh.bones.size()) base->vbuffer->createSkinnedVertexBuffer(mesh);
+                    else base->vbuffer->createVertexBuffer(mesh);
+
+                    base->vbuffer->createIndexBuffer(mesh);
+                    scene->meshes.push_back(mesh);
+                    object.meshID[i] = scene->meshes.size() - 1;
+                }
+           
+                if (modelData.animations.size() > 0) {
+                    object.animationID = this->scene->animations.size() - 1;
+                    object.hasAnimation = true;
+                }
+                else {
+                    object.hasAnimation = false;
+                }
+                Shader shader;
+                if (scene->meshes[object.meshID[0]].bones.size()) {
+                    shader.graphicsPipeline = this->scene->pipelines[1];
+                }
+                else {
+                    shader.graphicsPipeline = this->scene->pipelines[0];
+                }
+                object.shader = shader;
+                object.shader.ubos = base->vbuffer->createUniformBuffers(object.shader.graphicsPipeline->bufferSize);
+            }
+            this->scene->objects.push_back(object);
+        }
+        /*
         for (int i = 0; i < modelData.meshes.size(); i++) {
             if (modelData.meshes[i].bones.size()) base->vbuffer->createSkinnedVertexBuffer(modelData.meshes[i]);
             else base->vbuffer->createVertexBuffer(modelData.meshes[i]);
@@ -24,7 +63,7 @@ void Loader::load(int path_count, const char* paths[])
            
             this->scene->meshes.push_back(modelData.meshes[i]);
             Object object;
-            object.meshID = this->scene->meshes.size() - 1;
+            object.meshID.push_back(  this->scene->meshes.size() - 1);
             object.textureID = 0;
             object.ModelMatrix = modelData.transformations[i];
             object.ModelMatrix =  glm::translate(object.ModelMatrix, glm::vec3(scene->objects.size()*2.,0,0));
@@ -48,7 +87,7 @@ void Loader::load(int path_count, const char* paths[])
             object.shader.ubos = base->vbuffer->createUniformBuffers(object.shader.graphicsPipeline->bufferSize);
 
             this->scene->objects.push_back(object);
-        }
+        }*/
 	//	app->loadModel(path);
 	}
 }

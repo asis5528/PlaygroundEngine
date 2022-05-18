@@ -25,6 +25,31 @@ void VBuffer::createVertexBuffer(Mesh& mesh) {
     vkDestroyBuffer(vulkandevice->device, stagingBuffer, nullptr);
     vkFreeMemory(vulkandevice->device, stagingBufferMemory, nullptr);
 }
+void VBuffer::createSkinnedVertexBuffer(Mesh& mesh) {
+    VkDeviceSize bufferSize = sizeof(mesh.skinnedvertices[0]) * mesh.skinnedvertices.size();
+    for (int i = 0; i < mesh.skinnedvertices.size(); i++) {
+        for(int j=0;j<4;j++){
+           // mesh.skinnedvertices[i].Weights[j] = 1;
+        //std::cout<< mesh.skinnedvertices[i].IDs[j]<<"\n";
+        }
+    }
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    vulkandevice->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+    void* data;
+    vkMapMemory(vulkandevice->device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, mesh.skinnedvertices.data(), (size_t)bufferSize);
+    vkUnmapMemory(vulkandevice->device, stagingBufferMemory);
+
+    vulkandevice->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.vertexBuffer, mesh.vertexBufferMemory);
+
+    vulkandevice->copyBuffer(stagingBuffer, mesh.vertexBuffer, bufferSize);
+
+    vkDestroyBuffer(vulkandevice->device, stagingBuffer, nullptr);
+    vkFreeMemory(vulkandevice->device, stagingBufferMemory, nullptr);
+}
 
 void VBuffer::createIndexBuffer(Mesh& mesh) {
     VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();

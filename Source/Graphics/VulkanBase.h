@@ -20,7 +20,7 @@ public:
 	VkSampleCountFlagBits msaaSamples;
 	VulkanDevice* vulkandevice;
 	SwapChain* swapChain;
-	Framebuffer* offscreenbuffer;
+	//Framebuffer* offscreenbuffer;
 	VkPipelineCache pipelineCache;
 //	GraphicsPipeline* objectPipeline;
 	//GraphicsPipeline* quadPipeline;

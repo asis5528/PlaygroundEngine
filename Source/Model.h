@@ -7,6 +7,8 @@
 #include <map>
 #include "AnimationData.h"
 #include "Animation.h"
+#include "Object.h"
+#include "Scene.h"
 class Model
 {
 public:
@@ -14,9 +16,14 @@ public:
 	std::vector < glm::mat4> transformations;
 	std::vector<Animation> animations;
 	const aiScene* m_pScene;
-	Model(const char* path);
-	void processNode(aiNode* node, const aiScene* scene);
-    void processMesh(aiMesh* mesh, const aiScene* scene, Mesh& meshbuffer);
+	std::vector<Object> objects;
+	Object rootObj;
+	Node rootNode;
+	unsigned int scObjectSize;
+	Model(const char* path,const Scene *enscene);
+	//void processNode(aiNode* node, const aiScene* scene);
+	void processNode(aiNode* node, const aiScene* scene, Node &nodechild);
+	void processMesh(aiMesh* mesh, const aiScene* scene, Mesh& meshbuffer);
 	inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4* from);
 	void readAnimation(const aiNode* pNode, AnimationData* aData);
 	//void readAnimation(const aiNode* pNode);

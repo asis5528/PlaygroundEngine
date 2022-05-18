@@ -21,6 +21,7 @@
         VkSampleCountFlagBits msaaSamples;
         
         VkDevice device;
+        bool skinned = false;
       //  VkPipelineCache pipelineCache;
         std::vector<descriptorTypes> descriptorTypes;
 
@@ -31,7 +32,8 @@
         std::vector<VkPipelineShaderStageCreateInfo> shaderStagess;
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         VkVertexInputBindingDescription bindingDescription;
-        std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions;
+       // std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions;
+        std::vector< VkVertexInputAttributeDescription> attributeDescriptions;
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
         VkViewport viewport{};
         VkRect2D scissor{};
@@ -45,11 +47,7 @@
     };
 class GraphicsPipeline
 {
-    struct UniformBufferObject {
-        alignas(16) glm::mat4 model;
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-    };
+
 public:
     PipelineInput pipelineInput;
     VkDescriptorSetLayout descriptorSetLayout;
@@ -60,6 +58,7 @@ public:
     std::vector<uint64_t> bufferSize;
    // void k(PipelineInput* pipelineInput);
     ~GraphicsPipeline();
+    void clean();
     void setupPipeline(PipelineInput pipelineInput);
     void recreatePipeline(VkExtent2D resolution,VkRenderPass renderPass);
     void createGraphicsPipeline();

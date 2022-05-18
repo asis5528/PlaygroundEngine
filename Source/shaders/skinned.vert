@@ -28,8 +28,8 @@ void main() {
     mat4 k = mat4(1.0);
     vec4 localPosition = BoneTransform* vec4(v, 1.0);
     float a = -3.1415/2.;
-    localPosition.yz *=mat2(cos(a),sin(a),-sin(a),cos(a));
-    gl_Position = subo.proj * subo.view * subo.model * localPosition*0.00000001;
+    //localPosition.yz *=mat2(cos(a),sin(a),-sin(a),cos(a));
+    gl_Position = subo.proj * subo.view * subo.model * localPosition;
 
      if(int(inBoneIndices[0])==0){
  //   gl_Position=vec4(0.0);
@@ -37,9 +37,6 @@ void main() {
   //  ivec3 ind = inBoneIndices[0].xyz;
 
   fragColor = abs(inColor.xyz);
-//  fragColor =vec3( vec3(0.7));
-  //fragColor = vec3(abs(subo.boneMatrices[0][1]-subo.boneMatrices[1][1]));
-   // fragColor =mat4(subo.boneMatrices[int(inBoneIndices[0])] )[1].xyz;
- //   fragColor = vec3(inBoneIndices.x*0.0000000001);
+
     fragTexCoord = inTexCoord;
 }

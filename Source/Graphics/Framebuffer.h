@@ -23,6 +23,7 @@ class Framebuffer
 
 		Framebuffer(VulkanDevice *vulkandevice , uint32_t width, uint32_t height,VkSampleCountFlagBits msaaSamples,VkFormat colorFormat, VkFormat depthFormat);
 		~Framebuffer();
+		void clean();
 		void recreate();
 		void createRenderPass();
 		void createFrameBuffer();
