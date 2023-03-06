@@ -1,9 +1,9 @@
 #version 450
-
+#extension GL_EXT_multiview : enable
 layout(binding = 0) uniform SkinnedUniformBufferObject {
     mat4 model;
-    mat4 view;
-    mat4 proj;
+    mat4 view[2];
+    mat4 proj[2];
     mat4 boneMatrices[100];
 } subo;
 
@@ -26,10 +26,11 @@ void main() {
     BoneTransform += subo.boneMatrices[(inBoneIndices[2])] * inBoneWeights[2];
    BoneTransform += subo.boneMatrices[(inBoneIndices[3])] * inBoneWeights[3];
     mat4 k = mat4(1.0);
+   
     vec4 localPosition = BoneTransform* vec4(v, 1.0);
-    float a = -3.1415/2.;
+    
     //localPosition.yz *=mat2(cos(a),sin(a),-sin(a),cos(a));
-    gl_Position = subo.proj * subo.view * subo.model * localPosition;
+    gl_Position = subo.proj[gl_ViewIndex] * subo.view[gl_ViewIndex] * subo.model * localPosition;
 
      if(int(inBoneIndices[0])==0){
  //   gl_Position=vec4(0.0);

@@ -3,7 +3,7 @@
 
 layout (location = 0) in vec2 texcoord;
 layout(location = 0) out vec4 outColor;
-layout(binding = 0) uniform sampler2D texSampler;
+layout(binding = 0) uniform sampler2DArray texSampler;
 //layout(binding = 1) uniform sampler2D texSampler;
 
 
@@ -33,7 +33,7 @@ float c = smoothstep(0.25,0.1,length(uv-0.5));
 
 //uv.y+=sin(uv.x*105.)*0.01;
     //outColor = mix(texture(texSampler,uv,0),vec4(1.-c),0.)*2.;
-	outColor = texture(texSampler,uv);
+	outColor = texture(texSampler,vec3(uv,0.));
 	//outColor = vec4(1.,0.,0.,1.);
 	//outColor = resolve(texSampler,UV);
 }

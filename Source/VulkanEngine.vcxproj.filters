@@ -23,6 +23,9 @@
     <None Include="shaders\quad.frag" />
     <None Include="..\..\engine\game-engine\imgui.ini" />
     <None Include="shaders\skinned.vert" />
+    <None Include="shaders\Basic.frag" />
+    <None Include="shaders\volumetric.frag" />
+    <None Include="shaders\volumetric.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -109,6 +112,9 @@
     <ClCompile Include="GUI\EditorGui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Imgui\imconfig.h">
@@ -160,5 +166,6 @@
     <ClInclude Include="AnimationData.h" />
     <ClInclude Include="Animation.h" />
     <ClInclude Include="GUI\EditorGui.h" />
+    <ClInclude Include="Material.h" />
   </ItemGroup>
 </Project>

@@ -78,11 +78,14 @@ struct Mesh {
     VkDeviceMemory vertexBufferMemory;
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
+    glm::vec4 color;
+    int texID = -1;
+    int matID = 0;
     void draw(VkCommandBuffer commandBuffer);
 };
 
 
-struct Texture {
+struct VulkanTexture {
     uint32_t mipLevels;
     uint32_t width;
     uint32_t height;
@@ -90,27 +93,23 @@ struct Texture {
     VkDeviceMemory imageMemory;
     VkImageView imageView;
     VkSampler imageSampler;
+    VkImageType imageType = VK_IMAGE_TYPE_2D;
+    VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D;
     void destroy();
 };
-
-
-
-struct UniformBufferObject {
-    alignas(16) glm::mat4 model;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 proj;
+struct VulkanTexture3D : VulkanTexture {
+    uint32_t depth;
+    VkImageType imageType = VK_IMAGE_TYPE_3D;
+    VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_3D;
 };
 
-struct SkinnedUniformBufferObject {
-    alignas(16) glm::mat4 model;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 proj;
-    glm::mat4 boneMatrices[100] = {glm::mat4(1.0)};
+struct Texture {
+    const char* name;
+    uint32_t width;
+    uint32_t height;
+    unsigned char* data;
 
 };
-struct ubo1 {
-    float time1;
-    float time2;
-    float time3;
-};
+
+
 

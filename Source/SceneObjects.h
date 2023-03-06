@@ -8,7 +8,7 @@ class SceneObjects
 
 public:
 	std::vector<GraphicsPipeline*> pipelines;
-	std::vector<Texture> textures;
+	std::vector<VulkanTexture> textures;
 	std::vector<Mesh> meshes;
 	std::vector<Object> objects;
 	std::vector<Quad*> quads;

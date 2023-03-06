@@ -40,7 +40,7 @@ std::vector<VkDescriptorSet> VulkanDescriptor::createDescriptorSets(uint32_t siz
 	}
 	return descriptorSets;
 }
-void VulkanDescriptor::updateDescriptorSets(VkDescriptorSet descriptorSet, std::vector<UBO> ubos, std::vector<Texture> textures) {
+void VulkanDescriptor::updateDescriptorSets(VkDescriptorSet descriptorSet, std::vector<UBO> ubos, std::vector<VulkanTexture> textures) {
 
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 	descriptorWrites.resize(ubos.size() + textures.size());

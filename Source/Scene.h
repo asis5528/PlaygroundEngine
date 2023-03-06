@@ -3,12 +3,14 @@
 #include "Object.h"
 #include "quad.h"
 #include "SceneObjects.h"
+#include "Material.h"
 class Scene
 {
 	
 public:
 	std::vector<GraphicsPipeline*> pipelines;
-	std::vector<Texture> textures;
+	std::vector<VulkanTexture> textures;
+	std::vector<Material> materials;
 	std::vector<Mesh> meshes;
 	std::vector<Animation> animations;
 	std::vector<Object> objects;
@@ -18,6 +20,9 @@ public:
 	std::vector<Framebuffer*> framebuffers;
 	VkDescriptorPool descriptorPool;
 	VulkanBase* base;
+	glm::mat4 proj[2];
+	glm::mat4 view[2];
+	float offset = 1.5;
 
 	Scene(VulkanBase *vbase);
 	void init();

@@ -14,8 +14,16 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
    // outColor = mix(vec4(fragColor,1.),texture(texSampler, fragTexCoord),0.99)*(sin(uboo.time1*5.));
-    outColor = pow(texture(texSampler, fragTexCoord),vec4(1./2.2));
-    outColor = vec4(fragColor,1.);
+    outColor = pow(texture(texSampler, fragTexCoord),vec4(1./2.2))*vec4(1.,0.7,0.7,1.);
+    vec3 normals = normalize(fragColor);
+
+    vec3 sunDire = vec3(0.5,0.6,0.3);
+
+    float diffuse =clamp(dot(sunDire,normals),0.,1.)*2.;
+    outColor.rgb=diffuse*outColor.rgb+vec3(0.4,0.7,1.)*0.2;
+  //outColor.rgb = fragColor;
+    outColor.rgb *= outColor.a;
+    //outColor = vec4(fragColor,1.);
    // outColor = vec4(1.,0.,0.,1.);
     
 }

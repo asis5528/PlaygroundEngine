@@ -1,9 +1,10 @@
 #include "Model.h"
 #include <iostream>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <stb_image.h>
 
 
-Model::Model(const char* path, const Scene *enscene) {
+Model::Model(const char* path, const Scene *enscene):engineScene(enscene){
     Assimp::Importer importer;
     scObjectSize = enscene->objects.size();
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
@@ -29,7 +30,7 @@ Model::Model(const char* path, const Scene *enscene) {
     glm::vec3 skew;
     glm::vec4 pers;
     int upAxis = 0;
-    
+    int kt = scene->mNumTextures;
     if (scene->mMetaData)
     {
         int32_t UpAxis = 1, UpAxisSign = 1, FrontAxis = 2, FrontAxisSign = 1, CoordAxis = 0, CoordAxisSign = 1;
@@ -83,6 +84,103 @@ Model::Model(const char* path, const Scene *enscene) {
     aiMatrix4x4 rot;
     rot.Rotation(3.1415 / 2., aiVector3D(1, 0, 0), rot);
 
+    int k = scene->mNumTextures;
+
+
+    for (int i = 0; i < scene->mNumTextures; i++) {
+
+        const aiTexture* tex = scene->mTextures[i];
+        Texture texture = loadTexture(tex);
+        textures.push_back(texture);
+
+    }
+
+    for (int i = 0; i < scene->mNumMaterials; i++) {
+        aiMaterial *mat =  scene->mMaterials[i];
+        
+       
+
+        ai_int illumModel;
+        mat->Get(AI_MATKEY_SHADING_MODEL, illumModel);
+        aiShadingMode shadingMode = (aiShadingMode)illumModel;
+
+
+
+        aiColor4D color(0.f, 0.f, 0.f, 0.0f);
+        mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+
+
+        Material material;
+            switch (shadingMode){
+
+                case aiShadingMode_Phong:
+                    if (mat->GetTextureCount(aiTextureType_DIFFUSE)>0) {
+                       // Material material;
+                        material.type = TexturedMaterial;
+                        MaterialTexturedData *matData = new MaterialTexturedData();
+                        matData->DiffuseColor = glm::vec4(color.r,color.g,color.b,color.a);
+                        aiString texture_file;
+                        mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texture_file);
+                        std::pair<const aiTexture*, int> texData = scene->GetEmbeddedTextureAndIndex(texture_file.C_Str());
+                        matData->DiffuseTexture = (engineScene->textures.size()) + texData.second;
+                        material.materialData = matData;
+                    
+                    }
+                    else {
+                       // Material material;
+                        material.type = BasicMaterial;
+                        MaterialBasicData* matData = new MaterialBasicData();
+                        matData->DiffuseColor = glm::vec4(color.r, color.g, color.b, color.a);
+                        material.materialData = matData;
+                    }
+                    break;
+                case aiShadingMode_PBR_BRDF:
+                    if (mat->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+                    
+                        material.type = TexturedMaterial;
+                        MaterialTexturedData* matData = new MaterialTexturedData();
+                        matData->DiffuseColor = glm::vec4(color.r, color.g, color.b, color.a);
+                        aiString texture_file;
+                        mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texture_file);
+                        std::pair<const aiTexture*, int> texData = scene->GetEmbeddedTextureAndIndex(texture_file.C_Str());
+                        matData->DiffuseTexture = (engineScene->textures.size()) + texData.second;
+                        material.materialData = matData;
+
+                    }
+                    else {
+                       // Material material;
+                        material.type = BasicMaterial;
+                        MaterialBasicData* matData = new MaterialBasicData();
+                        matData->DiffuseColor = glm::vec4(color.r, color.g, color.b, color.a);
+                        material.materialData = matData;
+                    }
+                    break;
+                default:
+                    if (mat->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+                        // Material material;
+                        material.type = TexturedMaterial;
+                        MaterialTexturedData* matData = new MaterialTexturedData();
+                        matData->DiffuseColor = glm::vec4(color.r, color.g, color.b, color.a);
+                        aiString texture_file;
+                        mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texture_file);
+                        std::pair<const aiTexture*, int> texData = scene->GetEmbeddedTextureAndIndex(texture_file.C_Str());
+                        matData->DiffuseTexture = (engineScene->textures.size()) + texData.second;
+                        material.materialData = matData;
+
+                    }
+                    else {
+                        // Material material;
+                        material.type = BasicMaterial;
+                        MaterialBasicData* matData = new MaterialBasicData();
+                        matData->DiffuseColor = glm::vec4(color.r, color.g, color.b, color.a);
+                        material.materialData = matData;
+                    }
+            }
+            materials.push_back(material);
+    }
+    
+
+
     scene->mRootNode->mTransformation = scene->mRootNode->mTransformation*rot;
   //  glm::decompose(dec, scale, r, trans,skew,pers);
     processNode(scene->mRootNode, scene, this->rootNode);
@@ -103,11 +201,11 @@ Model::Model(const char* path, const Scene *enscene) {
         animation.m_GlobalInverseTransform = aiMatrix4x4ToGlm(&m_GlobalInverseTransform);
     
        
-
+       
         animations.push_back(animation);
      
     }
-    float k = 1.;
+   
 }
 
 void Model::processNode(aiNode* node, const aiScene* scene,Node & nodechild)
@@ -122,36 +220,20 @@ void Model::processNode(aiNode* node, const aiScene* scene,Node & nodechild)
     }
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
-        // the node object only contains indices to index the actual objects in the scene. 
-        // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
-      //  const char* stt = node->mName.C_Str();
-      //  const char* strr = "defaultobject";
-      //  const char* strk = "defaultobject";
-       // if (std::string(node->mName.C_Str()) == std::string(strr)) {
-        //    float k = 0.0;
-        //}
-
+      
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-
+      
+       
         Mesh meshbuffer;
         meshbuffer.name = mesh->mName.C_Str();
+       // meshbuffer.color = glm::vec4(color.r,color.g,color.b,color.a);
+        meshbuffer.matID =engineScene->materials.size()+ mesh->mMaterialIndex;
         processMesh(mesh, scene, meshbuffer);
         meshes.push_back(meshbuffer);
         childObj.meshID.push_back(meshes.size()-1);
         childObj.hasMesh = true;
-      //  const aiMatrix4x4 mat = node->mTransformation;
-       // const aiMatrix4x4 mg = m_pScene->mRootNode->mTransformation;
-
-       // glm::mat4 transformation = aiMatrix4x4ToGlm(&mg)*aiMatrix4x4ToGlm(&mat);
-       // transformations.push_back(transformation);
-       
     }
     const aiMatrix4x4 mat = node->mTransformation; 
-    
-  //  aiMatrix4x4 newmat = mat;
-   // mat.Rotation(3.1315 / 2., aiVector3D(1, 0, 0), newmat);
-
-
     glm::mat4 transformation = aiMatrix4x4ToGlm(&mat);
    //transformation = glm::rotate(transformation, 3.1315f / 2.f, glm::vec3(0, -1, 1));
   
@@ -352,6 +434,28 @@ void Model::readAnimation(const aiNode* pNode, AnimationData* aData) {
  
 
 
+}
+Texture Model::loadTexture(const aiTexture* tex)
+{
+    if (tex) {
+        int h = -1;
+        h = tex->mHeight;
+        if (h == 0) {
+            int width;
+            int height;
+            int comp;
+            stbi_uc* pixels = stbi_load_from_memory((unsigned char*)tex->pcData, tex->mWidth, &width, &height, &comp, 4);
+            Texture texture;
+            texture.width = width;
+            texture.height = height;
+            texture.data = pixels;
+            texture.name = tex->mFilename.C_Str();
+            return texture;
+            //textures.push_back(texture);
+           // meshbuffer.texID = (engineScene->textures.size() - 1) + (textures.size());
+        }
+    }
+   
 }
 const aiNodeAnim* Model::FindNodeAnim(const aiAnimation* pAnimation, const std::string NodeName)
 {

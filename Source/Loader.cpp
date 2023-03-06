@@ -1,5 +1,7 @@
 #include "Loader.h"
 #include "Model.h"
+#include <stb_image.h>
+#include <glm/gtx/matrix_decompose.hpp>
 
 Loader::Loader(VulkanBase* base, Scene* scene) {
 	this->base = base;
@@ -12,29 +14,66 @@ void Loader::load(int path_count, const char* paths[])
 	for (int i = 0; i < path_count; i++) {
 		const char* path = paths[i];
         Model modelData = Model(path, scene );
+        int modelCount = 0;
+        for (int i = 0; i < scene->objects.size(); i++) {
+            if (scene->objects[i].hasMesh) {
+                modelCount++;
+            }
+        }
         for (Node& node : modelData.rootNode.children) {
             scene->rootNode.children.push_back(node);
         }
         for (Animation& animation : modelData.animations) {
             this->scene->animations.push_back(animation);
         }
+
+        for (Material& material : modelData.materials) {
+            switch (material.type) {
+            case BasicMaterial:
+                material.pipeline = scene->pipelines[2];
+                material.skinnedPipeline = scene->pipelines[3];
+                break;
+            case TexturedMaterial:
+                material.pipeline = scene->pipelines[0];
+                material.skinnedPipeline = scene->pipelines[1];
+                break;
+            }
+
+            scene->materials.push_back(material);
+        }
+
+        for (Texture& rawtex : modelData.textures) {
+            VulkanTexture texture;
+            VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
+            texture.width = rawtex.width;
+            texture.height = rawtex.height;
+            texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texture.width, texture.height)))) + 1;
+            if (!rawtex.data) {
+                throw std::runtime_error("failed to load texture image!");
+            }
+            base->vbuffer->createTexturefromBuffer(texture, rawtex.data);
+            stbi_image_free(rawtex.data);
+            scene->textures.push_back(texture);
+        }
         
         for (Object &object:modelData.objects) {
             object.textureID = 0;
-          //  object.ModelMatrix = glm::translate(object.ModelMatrix, glm::vec3(scene->objects.size() * 2., 0, 0));
-            
-            if(object.hasMesh){
+         //   object.ModelMatrix = glm::translate(object.ModelMatrix, glm::vec3(modelCount * 10.-10., -100, 0));
+          //  glm::vec3 scale, position,skew;
+         //   glm::quat rot;
+         //   glm::vec4 pers;
+          //  glm::decompose(object.ModelMatrix,scale,rot,position,skew,pers);
+
+            if (object.hasMesh) {
                 for (int i = 0; i < object.meshID.size(); i++) {
                     Mesh mesh = modelData.meshes[object.meshID[i]];
-
                     if (mesh.bones.size()) base->vbuffer->createSkinnedVertexBuffer(mesh);
                     else base->vbuffer->createVertexBuffer(mesh);
-
                     base->vbuffer->createIndexBuffer(mesh);
                     scene->meshes.push_back(mesh);
                     object.meshID[i] = scene->meshes.size() - 1;
                 }
-           
+
                 if (modelData.animations.size() > 0) {
                     object.animationID = this->scene->animations.size() - 1;
                     object.hasAnimation = true;
@@ -42,15 +81,43 @@ void Loader::load(int path_count, const char* paths[])
                 else {
                     object.hasAnimation = false;
                 }
-                Shader shader;
-                if (scene->meshes[object.meshID[0]].bones.size()) {
-                    shader.graphicsPipeline = this->scene->pipelines[1];
+                //std::vector<VulkanShader> shader;
+
+
+                for (int i = 0; i < object.meshID.size(); i++) {
+                    Mesh mesh = scene->meshes[object.meshID[i]];
+                    VulkanShader shader;
+                    if (mesh.bones.size()) {
+                        shader.graphicsPipeline = scene->materials[mesh.matID].skinnedPipeline;
+                    }
+                    else {
+                        shader.graphicsPipeline = scene->materials[mesh.matID].pipeline;
+
+                    }
+                    /*
+                    if (mesh.texID >= 0)
+                    {
+                        if (mesh.bones.size()) {
+                            shader.graphicsPipeline = this->scene->pipelines[1];
+                        }
+                        else {
+                            shader.graphicsPipeline = this->scene->pipelines[0];
+                        }
+                    }
+                    else {
+                        if (mesh.bones.size()) {
+                            shader.graphicsPipeline = this->scene->pipelines[3];
+                        }
+                        else {
+                            shader.graphicsPipeline = this->scene->pipelines[0];
+                        }
+                    }*/
+                    shader.ubos = base->vbuffer->createUniformBuffers(shader.graphicsPipeline->bufferSize);
+                    object.shader.push_back(shader);
                 }
-                else {
-                    shader.graphicsPipeline = this->scene->pipelines[0];
-                }
-                object.shader = shader;
-                object.shader.ubos = base->vbuffer->createUniformBuffers(object.shader.graphicsPipeline->bufferSize);
+              //Come back if any errors or issue
+               // object.shader = shader;
+               // object.shader.ubos = base->vbuffer->createUniformBuffers(object.shader.graphicsPipeline->bufferSize);
             }
             this->scene->objects.push_back(object);
         }

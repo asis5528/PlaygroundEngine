@@ -42,7 +42,7 @@ void SwapChain::create() {
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
-    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1+0;
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
         imageCount = swapChainSupport.capabilities.maxImageCount;
     }
@@ -261,14 +261,14 @@ void SwapChain::createFrameBuffer()
     swapChainFramebuffers.resize(swapChainImageViews.size());
     
     framebufferColorImage = new VulkanImage(device, physicalDevice);
-    framebufferColorImage->createImage(swapChainExtent.width, swapChainExtent.height, 1, this->msaaSamples, swapChainImageFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    framebufferColorImage->createImageView(swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    framebufferColorImage->createImage(swapChainExtent.width, swapChainExtent.height,1, VK_IMAGE_TYPE_2D, 1, this->msaaSamples, swapChainImageFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    framebufferColorImage->createImageView(swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1,VK_IMAGE_VIEW_TYPE_2D);
    
     VkFormat depthFormat = utils::findDepthFormat(physicalDevice);
     
     framebufferDepthImage = new VulkanImage(device, physicalDevice);
-    framebufferDepthImage->createImage(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    framebufferDepthImage->createImageView(depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+    framebufferDepthImage->createImage(swapChainExtent.width, swapChainExtent.height,1, VK_IMAGE_TYPE_2D, 1, msaaSamples, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    framebufferDepthImage->createImageView(depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, VK_IMAGE_VIEW_TYPE_2D);
     
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
         std::array<VkImageView, 3> attachments = {

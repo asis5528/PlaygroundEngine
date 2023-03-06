@@ -7,7 +7,7 @@
 class Object
 {
 public:
-	Shader shader;
+	std::vector<VulkanShader> shader;
 	std::vector<uint32_t> meshID;
 	uint32_t textureID;
 	glm::mat4 ModelMatrix;

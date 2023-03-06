@@ -98,7 +98,13 @@ void GraphicsPipeline::setupPipeline(PipelineInput  pipelineInput) {
 
     //static VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     infoLocal.colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    infoLocal.colorBlendAttachment.blendEnable = VK_FALSE;
+    infoLocal.colorBlendAttachment.blendEnable = VK_TRUE;
+    infoLocal.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    infoLocal.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    infoLocal.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+    infoLocal.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    infoLocal.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    infoLocal.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
     //static VkPipelineColorBlendStateCreateInfo colorBlending{};
     infoLocal.colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -157,8 +163,10 @@ void GraphicsPipeline::createGraphicsPipeline() {
     pipelineInfo.pRasterizationState = &infoLocal.rasterizer;
     pipelineInfo.pMultisampleState = &infoLocal.multisampling;
     pipelineInfo.pDepthStencilState = &infoLocal.depthStencil;
+    infoLocal.colorBlending.pAttachments = &infoLocal.colorBlendAttachment;
     pipelineInfo.pColorBlendState = &infoLocal.colorBlending;
-
+    
+   
     pipelineInfo.renderPass = pipelineInput.renderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;

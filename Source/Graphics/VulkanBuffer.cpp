@@ -104,7 +104,7 @@ std::vector<UBO> VBuffer::createUniformBuffers(std::vector<uint64_t> Buffersize)
 }
 
 //Remove making sampler for each image,add a feature to initialize bunch of samplers at first and assigned them to different images
-void VBuffer::createTexturefromBuffer(Texture& texture,void *pixels) {
+void VBuffer::createTexturefromBuffer(VulkanTexture& texture,void *pixels) {
     VkDeviceSize imageSize = texture.width * texture.height * 4;
     VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
@@ -118,13 +118,43 @@ void VBuffer::createTexturefromBuffer(Texture& texture,void *pixels) {
     memcpy(data, pixels, static_cast<size_t>(imageSize));
     vkUnmapMemory(vulkandevice->device, stagingBufferMemory);
     VulkanImage vimage =  VulkanImage(vulkandevice->device,vulkandevice->physicalDevice);
-    vimage.createImage(texture.width, texture.height, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    vimage.createImage(texture.width, texture.height, 1,texture.imageType, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     transitionImageLayout(vimage.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture.mipLevels);
-    copyBufferToImage(stagingBuffer, vimage.image, static_cast<uint32_t>(texture.width), static_cast<uint32_t>(texture.height));
+    copyBufferToImage(stagingBuffer, vimage.image, static_cast<uint32_t>(texture.width), static_cast<uint32_t>(texture.height),1);
     vkDestroyBuffer(vulkandevice->device, stagingBuffer, nullptr);
     vkFreeMemory(vulkandevice->device, stagingBufferMemory, nullptr);
     generateMipmaps(vimage.image, format, texture.width, texture.height, texture.mipLevels);
-    vimage.createImageView( format, VK_IMAGE_ASPECT_COLOR_BIT, texture.mipLevels);
+    
+    vimage.createImageView( format, VK_IMAGE_ASPECT_COLOR_BIT, texture.mipLevels, texture.imageViewType);
+    texture.image = vimage.image;
+    texture.imageView = vimage.imageView;
+    texture.imageMemory = vimage.imageMemory;
+    texture.imageSampler = createTextureSampler(texture.mipLevels);
+    // createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+}
+
+void VBuffer::createTexture3DfromBuffer(VulkanTexture3D& texture, void* pixels) {
+    VkDeviceSize imageSize = texture.width * texture.height * texture.depth * 4;
+    VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
+
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    vulkandevice->createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+    void* data;
+    vkMapMemory(vulkandevice->device, stagingBufferMemory, 0, imageSize, 0, &data);
+    memcpy(data, pixels, static_cast<size_t>(imageSize));
+    vkUnmapMemory(vulkandevice->device, stagingBufferMemory);
+    VulkanImage vimage = VulkanImage(vulkandevice->device, vulkandevice->physicalDevice);
+    vimage.createImage(texture.width, texture.height, texture.depth,texture.imageType, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    transitionImageLayout(vimage.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture.mipLevels);
+    copyBufferToImage(stagingBuffer, vimage.image, static_cast<uint32_t>(texture.width), static_cast<uint32_t>(texture.height), static_cast<uint32_t>(texture.depth));
+    vkDestroyBuffer(vulkandevice->device, stagingBuffer, nullptr);
+    vkFreeMemory(vulkandevice->device, stagingBufferMemory, nullptr);
+  //  generateMipmaps(vimage.image, format, texture.width, texture.height, texture.mipLevels);
+
+    vimage.createImageView(format, VK_IMAGE_ASPECT_COLOR_BIT, texture.mipLevels, texture.imageViewType);
     texture.image = vimage.image;
     texture.imageView = vimage.imageView;
     texture.imageMemory = vimage.imageMemory;
@@ -188,7 +218,7 @@ void VBuffer::transitionImageLayout(VkImage image, VkImageAspectFlags aspectMask
     vulkandevice->endSingleTimeCommands(commandBuffer);
 }
 
-void VBuffer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+void VBuffer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t depth) {
     VkCommandBuffer commandBuffer = vulkandevice->beginSingleTimeCommands();
 
     VkBufferImageCopy region{};
@@ -203,7 +233,7 @@ void VBuffer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, 
     region.imageExtent = {
         width,
         height,
-        1
+        depth
     };
 
     vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
@@ -300,7 +330,7 @@ void VBuffer::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWi
 VkSampler VBuffer::createTextureSampler(uint32_t miplevels) {
     VkPhysicalDeviceProperties properties{};
     vkGetPhysicalDeviceProperties(vulkandevice->physicalDevice, &properties);
-
+    
     VkSamplerCreateInfo samplerInfo{};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     samplerInfo.magFilter = VK_FILTER_LINEAR;

@@ -8,7 +8,7 @@ public:
 	VulkanBase* base;
 	VkDescriptorSet descriptorSet;
 	VkDescriptorPool descriptorPool;
-	std::vector<Texture> textures;
+	std::vector<VulkanTexture> textures;
 
 	Quad(VulkanBase *vbase);
 	~Quad();

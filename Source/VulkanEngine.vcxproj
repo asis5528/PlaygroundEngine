@@ -89,14 +89,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\asisp\Documents\Visual Studio 2019\Libraries\tinyobjloader-master;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glm-0.9.9.8\glm;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glfw-3.3.4.bin.WIN64\glfw-3.3.4.bin.WIN64\include;C:\VulkanSDK\1.2.189.2\Include;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\stb;C:\Users\asisp\Documents\source\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\asisp\source\repos\VulkanEngine\ThirdParty\Headers\OpenVR;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\tinyobjloader-master;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glm-0.9.9.8\glm;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glfw-3.3.4.bin.WIN64\glfw-3.3.4.bin.WIN64\include;C:\VulkanSDK\1.2.189.2\Include;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\stb;C:\Users\asisp\Documents\source\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\asisp\Documents\source\build\lib\Debug;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glfw-3.3.4.bin.WIN64\glfw-3.3.4.bin.WIN64\lib-vc2019;C:\VulkanSDK\1.2.189.2\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\asisp\source\repos\VulkanEngine\ThirdParty\Libs\OpenVR;C:\Users\asisp\Documents\source\build\lib\Debug;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glfw-3.3.4.bin.WIN64\glfw-3.3.4.bin.WIN64\lib-vc2019;C:\VulkanSDK\1.2.189.2\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp.lib;openvr_api.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -125,14 +125,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\asisp\Documents\Visual Studio 2019\Libraries\tinyobjloader-master;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glm-0.9.9.8\glm;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glfw-3.3.4.bin.WIN64\glfw-3.3.4.bin.WIN64\include;C:\VulkanSDK\1.2.189.2\Include;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\stb;C:\Users\asisp\Documents\source\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\asisp\source\repos\VulkanEngine\ThirdParty\Headers\OpenVR;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\tinyobjloader-master;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glm-0.9.9.8\glm;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glfw-3.3.4.bin.WIN64\glfw-3.3.4.bin.WIN64\include;C:\VulkanSDK\1.2.189.2\Include;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\stb;C:\Users\asisp\Documents\source\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\asisp\Documents\source\build\lib\Debug;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glfw-3.3.4.bin.WIN64\glfw-3.3.4.bin.WIN64\lib-vc2019;C:\VulkanSDK\1.2.189.2\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\asisp\source\repos\VulkanEngine\ThirdParty\Libs\OpenVR;C:\Users\asisp\Documents\source\build\lib\Debug;C:\Users\asisp\Documents\Visual Studio 2019\Libraries\glfw-3.3.4.bin.WIN64\glfw-3.3.4.bin.WIN64\lib-vc2019;C:\VulkanSDK\1.2.189.2\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp.lib;openvr_api.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -157,11 +157,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="..\..\engine\game-engine\imgui.ini" />
+    <None Include="shaders\Basic.frag" />
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
     <None Include="shaders\skinned.vert" />
+    <None Include="shaders\volumetric.frag" />
+    <None Include="shaders\volumetric.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
@@ -186,6 +189,7 @@
     <ClCompile Include="Graphics\Mesh.cpp" />
     <ClCompile Include="Graphics\VulkanDescriptor.cpp" />
     <ClCompile Include="Graphics\IMGUI\VulkanImgui.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Object.cpp" />
@@ -218,6 +222,7 @@
     <ClInclude Include="Graphics\VulkanDescriptor.h" />
     <ClInclude Include="Graphics\IMGUI\VulkanImgui.h" />
     <ClInclude Include="Loader.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Object.h" />
