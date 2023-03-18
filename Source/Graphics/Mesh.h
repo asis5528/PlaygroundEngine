@@ -95,6 +95,7 @@ struct VulkanTexture {
     VkSampler imageSampler;
     VkImageType imageType = VK_IMAGE_TYPE_2D;
     VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D;
+    VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     void destroy();
 };
 struct VulkanTexture3D : VulkanTexture {

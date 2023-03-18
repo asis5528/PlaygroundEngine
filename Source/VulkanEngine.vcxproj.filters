@@ -26,6 +26,7 @@
     <None Include="shaders\Basic.frag" />
     <None Include="shaders\volumetric.frag" />
     <None Include="shaders\volumetric.vert" />
+    <None Include="shaders\simple.comp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

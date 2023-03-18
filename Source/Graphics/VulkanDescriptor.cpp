@@ -73,7 +73,7 @@ void VulkanDescriptor::updateDescriptorSets(VkDescriptorSet descriptorSet, std::
 
 		
 		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageLayout = textures[i].imageLayout;
 		imageInfo.imageView = textures[i].imageView;
 		imageInfo.sampler = textures[i].imageSampler;
 		descriptorWrites[index].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

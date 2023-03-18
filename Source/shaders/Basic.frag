@@ -91,7 +91,7 @@ void main() {
    
    //sum=mix(sum,vec4(line),line);
    sum+=line;
-   outColor.rgb = sum.rgb;
+   outColor.rgb = sum.rgb*vec3(1.,1.,1.);
    outColor.a=sum.a;
    outColor.rgb*=outColor.a;
    

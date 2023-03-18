@@ -100,6 +100,24 @@ void Scene::renderPass() {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
+        // Image memory barrier to make sure that compute shader writes are finished before sampling from the texture
+        VkImageMemoryBarrier imageMemoryBarrier = {};
+        imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+        imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+        imageMemoryBarrier.image = computeTexture.image;
+        imageMemoryBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 1, 1, 0, 1 };
+        imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        vkCmdPipelineBarrier(
+            base->commandBuffers[i],
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &imageMemoryBarrier);
+
         framebuffers[0]->beginRenderPass(base->commandBuffers[i]);
 
 
@@ -152,7 +170,9 @@ void Scene::update() {
     // offset =1.5;
     
     ///for non vr////////
-    glm::vec3 camPos = glm::vec3(glm::sin(iTime / 3.) * offset, glm::cos(iTime / 3.) * offset, 0.0f);
+    float angle = iTime/3.;
+    angle = 0.;
+    glm::vec3 camPos = glm::vec3(glm::sin(angle) * offset, glm::cos(angle) * offset, 0.0f);
    view[0] = glm::lookAt(camPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 #endif
     UniformBufferObject ubo{};
@@ -407,6 +427,7 @@ void Scene::recreate()
         quad->graphicsPipeline->clean();
         quad->graphicsPipeline->recreatePipeline(ex, base->swapChain->renderPass);
     }
+    //uncomment this when needs actual updating the frame texture
     quads[0]->textures[0].imageView = framebuffers[0]->MultisampledColorImage->imageView;
     for (Quad*& quad : quads) {
         quad->cleandescriptors();

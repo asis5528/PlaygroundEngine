@@ -37,9 +37,9 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 601;
 
-const std::string MODEL_PATH = "models/cube.glb";
+const std::string MODEL_PATH = "models/nerd.glb";
 
-const std::string TEXTURE_PATH = "textures/spider.png";
+const std::string TEXTURE_PATH = "textures/bounds3.png";
 const std::string TEXTURE_PATH2 = "textures/viking_room.png";
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -67,6 +67,7 @@ const bool enableValidationLayers = true;
 #include "Loader.h"
 #include "GUI/EditorGui.h"
 #include <glm/gtx/matrix_decompose.hpp>
+#include "Graphics/VulkanUtils.h"
 
 
 class Vulkan {
@@ -92,6 +93,10 @@ private:
     EditorGui *editorGui;
 
     VkDescriptorPool descriptorPool;
+
+    VkCommandBuffer computeCommandBuffer;
+    VkFence computeFence;
+    VulkanTexture ct;
 
     vr::IVRSystem *sym;
   //  Quad *quad;
@@ -151,12 +156,12 @@ private:
         scene = new Scene(base);
         loader = new Loader(base, scene);
         editorGui = new EditorGui(scene,base);
-       // VulkanTexture ct = createComputeTexture();
+       
         scene->textures.push_back(createTexture(TEXTURE_PATH.c_str()));
         scene->textures.push_back(createTexture(TEXTURE_PATH2.c_str()));
        // scene->textures.push_back(createTexture3D());
         scene->init();
-
+        
         vulkanImgui = new VulkanImgui(base, window);
         const char* p[] = { MODEL_PATH.c_str() };
       //  loadModel(MODEL_PATH.c_str());
@@ -166,9 +171,8 @@ private:
        // MaterialTexturedData dat;
       //  dat.DiffuseTexture = 0;
        // scene->materials[0].materialData = &dat;
-
-        //scene->meshes[0].texID = 0;
-
+   
+      
 
         //edit object 0 for 3D texture raymarching,you can comment while doing other stuffs
         /*
@@ -186,9 +190,21 @@ private:
 
 
         //scene->meshes[scene->objects[0].meshID[0]].matID =  
+       
         scene->createSceneDescriptor();
+
+        prepareCompute();
+       // scene->quads[0]->textures[0] = ct;
+      //  scene->quads[0]->createdescriptors();
+        scene->computeTexture = ct;
+        scene->textures.push_back(ct);
+
+        MaterialTexturedData* dat = (struct MaterialTexturedData*)scene->materials[scene->meshes[0].matID].materialData;
+        dat->DiffuseTexture = scene->textures.size()-1;
+
         createCommandBuffers();
         vulkanImgui->init();
+        
         glfwSetScrollCallback(window, scroll_callback);
         
     }
@@ -278,20 +294,242 @@ private:
         return texture;
 
     }
+
+    void prepareCompute() {
+
+        ct = createComputeTexture();
+
+        VkDescriptorSetLayout descriptorSetLayout;
+        VkPipelineLayout pipelineLayout;
+        VkDescriptorSet descriptorSet;
+        VkPipeline computePipeline;
+        VkCommandPool commandPool;
+        VkDescriptorPool computeDescriptorPool;
+
+
+        VkDescriptorSetLayoutBinding binding{};
+        binding.binding = 0;
+        binding.descriptorCount = 1;
+        binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+       // binding.pImmutableSamplers = nullptr;
+        binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+       
+
+        std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings;
+        setLayoutBindings.push_back(binding);
+
+      
+        binding.binding = 1;
+        binding.descriptorCount = 1;
+        binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        // binding.pImmutableSamplers = nullptr;
+        binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+        setLayoutBindings.push_back(binding);
+
+        VkDescriptorSetLayoutCreateInfo layoutInfo{};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layoutInfo.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+        layoutInfo.pBindings = setLayoutBindings.data();
+
+        if (vkCreateDescriptorSetLayout(base->device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create descriptor set layout!");
+        }
+
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = 1;
+        pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+
+        if (vkCreatePipelineLayout(base->device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create pipeline layout!");
+        }
+
+
+     
+
+       //loading and creating shaderstage is next
+        
+
+        auto computeShaderCode = utils::readFile("shaders/compute.spv");
+
+
+        VkShaderModuleCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        createInfo.codeSize = computeShaderCode.size();
+        createInfo.pCode = reinterpret_cast<const uint32_t*>(computeShaderCode.data());
+
+        VkShaderModule shaderModule;
+        if (vkCreateShaderModule(base->device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create shader module!");
+        }
+
+        
+
+        VkPipelineShaderStageCreateInfo shaderStage{};
+        shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+        shaderStage.module = shaderModule;
+        shaderStage.pName = "main";
+
+
+
+        VkComputePipelineCreateInfo computePipelineCreateInfo{};
+        computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        computePipelineCreateInfo.layout = pipelineLayout;
+      //  computePipelineCreateInfo.flags = 0;
+        computePipelineCreateInfo.stage = shaderStage;
+      
+        if (vkCreateComputePipelines(base->device, nullptr,1,&computePipelineCreateInfo,nullptr,&computePipeline) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create compute pipeline!");
+        }
+
+           base->vulkandescriptor->createDescriptorPool(2,
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER },
+            3, &computeDescriptorPool);
+
+        VkDescriptorSetAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = computeDescriptorPool;
+        allocInfo.descriptorSetCount = static_cast<uint32_t>(1);
+        allocInfo.pSetLayouts = &descriptorSetLayout;
+        
+       // descriptorSets.resize(size);
+        if (vkAllocateDescriptorSets(base->device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate descriptor sets!");
+        }
+
+
+        std::vector<VkWriteDescriptorSet> computeWriteDescriptorSets;
+
+
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+        imageInfo.imageView = ct.imageView;
+        imageInfo.sampler = ct.imageSampler;
+
+        VkDescriptorImageInfo imageInfo2{};
+        imageInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo2.imageView = scene->textures[0].imageView;
+        imageInfo2.sampler = scene->textures[0].imageSampler;
+
+        VkWriteDescriptorSet writeDescriptorSet{};
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        writeDescriptorSet.dstBinding = 0;
+        writeDescriptorSet.pImageInfo = &imageInfo;
+        writeDescriptorSet.descriptorCount = 1;
+        computeWriteDescriptorSets.push_back(writeDescriptorSet);
+
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        writeDescriptorSet.dstBinding = 1;
+        writeDescriptorSet.pImageInfo = &imageInfo2;
+        writeDescriptorSet.descriptorCount = 1;
+        computeWriteDescriptorSets.push_back(writeDescriptorSet);
+       
+
+        vkUpdateDescriptorSets(base->device, static_cast<uint32_t>(computeWriteDescriptorSets.size()), computeWriteDescriptorSets.data(), 0, nullptr);
+
+
+
+        VkCommandPoolCreateInfo cmdPoolInfo = {};
+        cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        cmdPoolInfo.queueFamilyIndex = base->vulkandevice->queueID;
+        cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        if (vkCreateCommandPool(base->device, &cmdPoolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create compute command pool!");
+        }
+
+        VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+        commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        commandBufferAllocateInfo.commandPool = commandPool;
+        commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        commandBufferAllocateInfo.commandBufferCount = 1;
+        if (vkAllocateCommandBuffers(base->device, &commandBufferAllocateInfo, &computeCommandBuffer) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create compute command buffer!");
+        }
+        VkFenceCreateInfo fenceCreateInfo{};
+        fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        if (vkCreateFence(base->device, &fenceCreateInfo, nullptr, &computeFence) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create compute fence!");
+        }
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        if (vkBeginCommandBuffer(computeCommandBuffer, &beginInfo) != VK_SUCCESS) {
+            throw std::runtime_error("failed to begin recording command buffer!");
+        }
+        vkCmdBindPipeline(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
+        vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, 0, 0);
+
+        vkCmdDispatch(computeCommandBuffer, ct.width / 32, ct.height / 32, 1);
+
+        if (vkEndCommandBuffer(computeCommandBuffer) != VK_SUCCESS) {
+            throw std::runtime_error("failed to record command buffer!");
+        }
+        float k = 0.;
+    }
+
     VulkanTexture createComputeTexture() {
         VulkanTexture texture;
         int width = 512;
         int height = 512;
         texture.width = width;
         texture.height = height;
-        VulkanImage image =  VulkanImage(base->device,base->vulkandevice->physicalDevice);
+        texture.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-        image.createImage(width, height, 1, VK_IMAGE_TYPE_2D, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        image.createImageView(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, 1, VK_IMAGE_VIEW_TYPE_2D);
+
+        const uint32_t memSize = width * height  * 4;
+        uint8_t* pixels = new uint8_t[memSize];
+        int32_t index = 0;
+        for (int32_t y = 0; y < height; y++)
+        {
+            for (int32_t x = 0; x < width; x++)
+            {
+                uint8_t dat = 255;
+                pixels[index + 0] = 255;
+                pixels[index + 1] = 0;
+                pixels[index + 2] = 0;
+                pixels[index + 3] = 255;
+                index += 4;
+            }
+        }
+
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+
+        VulkanImage image =  VulkanImage(base->device,base->vulkandevice->physicalDevice);
+     //   void* data;
+
+     //   base->vulkandevice->createBuffer(memSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+     //   vkMapMemory(base->device, stagingBufferMemory, 0, memSize, 0, &data);
+      //  memcpy(data, pixels, static_cast<size_t>(memSize));
+      //  vkUnmapMemory(base->device, stagingBufferMemory);
+
+       
+
+        image.createImage(width, height, 1, VK_IMAGE_TYPE_2D, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      //  base->vbuffer->transitionImageLayout(image.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
+    //    base->vbuffer->copyBufferToImage(stagingBuffer, image.image, static_cast<uint32_t>(texture.width), static_cast<uint32_t>(texture.height), 1);
+        base->vbuffer->transitionImageLayout(image.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, 1);
+        //vkDestroyBuffer(base->device, stagingBuffer, nullptr);
+       // vkFreeMemory(base->device, stagingBufferMemory, nullptr);
+
+        
+        image.createImageView(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, 1, VK_IMAGE_VIEW_TYPE_2D);
 
         texture.image = image.image;
         texture.imageView = image.imageView;
         texture.imageMemory = image.imageMemory;
+        //MAKE OWN SAMPLER NEXT TIME AIGHT?
+        texture.imageSampler = scene->textures[0].imageSampler;
         return texture;
     }
     VulkanTexture createTexture3D() {
@@ -599,6 +837,7 @@ private:
     }
     void drawFrame() {
         static int frameid = 0;
+    
       //  if (frameid == 0) {
         static float time = 0.;
 
@@ -640,9 +879,22 @@ private:
         else if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image!");
         }
+        
+        vkWaitForFences(base->device, 1, &computeFence, VK_TRUE, UINT64_MAX);
+        vkResetFences(base->device, 1, &computeFence);
 
+        VkSubmitInfo computeSubmitInfo{};
+        computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        computeSubmitInfo.commandBufferCount = 1;
+        computeSubmitInfo.pCommandBuffers = &computeCommandBuffer;
+
+
+        if (vkQueueSubmit(base->queue, 1, &computeSubmitInfo, computeFence) != VK_SUCCESS) {
+            throw std::runtime_error("failed to sumbit queue!");
+        }
+        float k = 1.;
     }
-   
+    
    
 };
 

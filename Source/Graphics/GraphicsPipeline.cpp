@@ -76,7 +76,7 @@ void GraphicsPipeline::setupPipeline(PipelineInput  pipelineInput) {
     infoLocal.rasterizer.rasterizerDiscardEnable = VK_FALSE;
     infoLocal.rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     infoLocal.rasterizer.lineWidth = 1.0f;
-    infoLocal.rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;;
+    infoLocal.rasterizer.cullMode = VK_CULL_MODE_NONE;
     infoLocal.rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     infoLocal.rasterizer.depthBiasEnable = VK_FALSE;
 

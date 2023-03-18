@@ -1,0 +1,141 @@
+#version 450
+
+layout (local_size_x = 32, local_size_y = 32,local_size_z = 1) in;
+layout (binding = 0, rgba16) uniform   image2D resultImage;
+layout(binding = 1) uniform sampler2D tex;
+vec4 T(vec2 U) { return texelFetch(tex,ivec2(U),0);}
+#define A(i) imageLoad(resultImage,ivec2(i+u))
+void main()
+{
+vec2 u = vec2(gl_GlobalInvocationID.xy);
+vec2 iResolution =vec2(imageSize(resultImage));
+vec4 r = vec4(1.0);
+ r *= 0.;
+
+    for(vec2 i = vec2(-4); ++i.x < 5.;) for(i.y = -4.; ++i.y < 5.;) {
+    vec4 neigh = A(i);
+        float m = neigh.z;
+        vec2 v = neigh.xy;                          // neighbour velocity
+       v.y-=m*0.01;
+       r += m                                // neighbour mass
+                * exp(-dot(v+i,v+i)) / 3.14        // normalised Gaussian
+                * vec4((v+i)*(1.-m)+v,1,1); // velocity contribution
+
+
+    }
+    r.xy /= r.z + 1e-6;
+
+      /* if(length(u-vec2(200.))<50.){
+         r.xy*=0.;
+        
+       }*/
+       vec2 uv = u/iResolution.xy;
+       float fr = imageLoad(resultImage,ivec2(4.,300.)).w;
+        float bounds = texture(tex,vec2(uv.x,(1.-uv.y))).r;
+      
+        if(bounds>0.01){
+         
+        r.xy*=vec2(-1.,-1.);
+       // r.y-=0.1;
+         r.w *=0.0;
+        }
+
+     if((u.y+u.x*0.1)<60.){
+     r.y*=-1.;
+    r.x+=1.3;
+       if(sign(r.y)<0.){
+     r.y*=-10.;
+    
+    }
+     
+    }
+      if(u.x>510.){
+      r.x+=1.1;
+      }
+    if(u.x<10.){
+    if(sign(r.x)<0.){
+     r.x*=-2.;
+    }
+   
+    }
+    if( u.y>500.){
+    r.y*=-1.;
+      if(sign(r.y)>0.){
+     r.y*=-2.;
+    }
+    }
+    
+
+        vec2 m = 4.*u/iResolution.xy-2.;
+        if(fr<100.){
+        r += vec4(-r.z*23.,-r.z*1.1,1.,0) * smoothstep(60.,58.,length(u.y-470.))*0.001;}
+        if(u.x<5.){
+        
+        fr+=0.1;
+        r.w = fr;
+        }
+      
+         imageStore(resultImage, ivec2(gl_GlobalInvocationID.xy), r);
+
+/*
+vec2  U = vec2(gl_GlobalInvocationID.xy);
+vec2 iResolution =vec2(imageSize(resultImage));
+vec4 O;
+ O = T(U-T(U).xy);
+    
+    vec4 a,b,c,d;
+    
+    a = T(U+vec2(1.,0.));
+    b = T(U+vec2(0.,1.));
+    c = T(U+vec2(-1.,0.));
+    d = T(U+vec2(0.,-1.));
+
+
+	 vec2 pre = vec2(a.z-c.z,b.z-d.z);
+    vec2 den = vec2(a.w-c.w,b.w-d.w);
+    O.xyz = vec3(O.x+pre.x,O.y+pre.y,0.25*(a.z+b.z+c.z+d.z)-0.05*(c.x-a.x+d.y-b.y));
+    
+
+    
+        vec2 uv = (2.*U-iResolution.xy)/iResolution.y;
+
+    if(length(U-vec2(250.,250.))<10.) {O = vec4(0.01,0.,O.z,1.);}
+    
+  //  if(U.x>(iResolution.x-1.)) O.xy*=0.;
+ //   if(U.y<1.) O.xy*=0.;
+//    if(U.x<1.) O.xy*=0.;
+
+
+
+    imageStore(resultImage, ivec2(gl_GlobalInvocationID.xy), O);
+
+
+    */
+    
+    /*
+
+
+vec4 col = imageLoad(resultImage,ivec2(gl_GlobalInvocationID.xy));
+
+if(gl_GlobalInvocationID.x>510){
+	imageStore(resultImage, ivec2(gl_GlobalInvocationID.xy), vec4(col.r+0.01,0.,0., 0.0));
+
+}else{
+
+//col.r+=0.01;
+ivec2 dim = imageSize(resultImage);
+float time = imageLoad(resultImage,ivec2(511,50)).r;
+	vec2 uv = 1.-vec2(gl_GlobalInvocationID.xy) / dim;
+	float c = smoothstep(0.1,0.09,length(uv-vec2(0.5+cos(time)*(0.4-time*0.03),0.5+sin(time)*(0.4-time*0.03))));
+	vec3 finalColor = col.rgb*0.99+vec3(c)*0.05;
+	
+
+	imageStore(resultImage, ivec2(gl_GlobalInvocationID.xy), vec4(finalColor, 0.0));
+	
+
+}
+
+*/
+
+
+}

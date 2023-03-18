@@ -19,6 +19,7 @@ public:
 	Node rootNode;
 	std::vector<Framebuffer*> framebuffers;
 	VkDescriptorPool descriptorPool;
+	VulkanTexture computeTexture;
 	VulkanBase* base;
 	glm::mat4 proj[2];
 	glm::mat4 view[2];
