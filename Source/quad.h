@@ -1,6 +1,7 @@
 #pragma once
 #include "Graphics/GraphicsPipeline.h"
 #include "Graphics/VulkanBase.h"
+
 class Quad
 {
 public:
@@ -9,8 +10,9 @@ public:
 	VkDescriptorSet descriptorSet;
 	VkDescriptorPool descriptorPool;
 	std::vector<VulkanTexture> textures;
-
-	Quad(VulkanBase *vbase);
+	Framebuffer *fr;
+	//Quad(VulkanBase *vbase);
+	Quad(VulkanBase* vbase, Framebuffer *fr);
 	~Quad();
 	void createGraphicsPipeline(std::string vshaderpath, std::string fshaderpath);
 	void createdescriptors();

@@ -20,6 +20,27 @@ void VulkanBase::init(GLFWwindow* window) {
     pickPhysicalDevice();
    
     vulkandevice = new VulkanDevice(vkPhysicalDevice);
+    VkPhysicalDeviceFeatures2KHR deviceFeatures2{};
+    VkPhysicalDeviceMultiviewFeaturesKHR extFeatures{};
+    extFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES_KHR;
+    deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+    deviceFeatures2.pNext = &extFeatures;
+    PFN_vkGetPhysicalDeviceFeatures2KHR vkGetPhysicalDeviceFeatures2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(vkGetInstanceProcAddr(vkinstance, "vkGetPhysicalDeviceFeatures2KHR"));
+    vkGetPhysicalDeviceFeatures2KHR(vkPhysicalDevice, &deviceFeatures2);
+    std::cout << "Multiview features:" << std::endl;
+    std::cout << "\tmultiview = " << extFeatures.multiview << std::endl;
+    std::cout << "\tmultiviewGeometryShader = " << extFeatures.multiviewGeometryShader << std::endl;
+    std::cout << "\tmultiviewTessellationShader = " << extFeatures.multiviewTessellationShader << std::endl;
+    std::cout << std::endl;
+
+    VkPhysicalDeviceProperties2KHR deviceProps2{};
+    VkPhysicalDeviceMultiviewPropertiesKHR extProps{};
+    extProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES_KHR;
+    deviceProps2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+    deviceProps2.pNext = &extProps;
+    PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(vkinstance, "vkGetPhysicalDeviceProperties2KHR"));
+    vkGetPhysicalDeviceProperties2KHR(vkPhysicalDevice, &deviceProps2);
+
     vulkandevice->createLogicalDevice();
     vulkandevice->createCommandPool();
     
@@ -117,7 +138,7 @@ void VulkanBase::pickPhysicalDevice() {
     }
     */
    
-    vkPhysicalDevice = devices[0];
+    vkPhysicalDevice = devices[1];
     VkPhysicalDeviceProperties p;
     vkGetPhysicalDeviceProperties(vkPhysicalDevice, &p);
     if (vkPhysicalDevice == VK_NULL_HANDLE) {

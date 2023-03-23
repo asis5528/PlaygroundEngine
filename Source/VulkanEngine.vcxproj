@@ -160,6 +160,7 @@
     <None Include="shaders\Basic.frag" />
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
+    <None Include="shaders\sdfCompute.comp" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
     <None Include="shaders\simple.comp" />

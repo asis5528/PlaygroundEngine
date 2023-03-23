@@ -19,7 +19,7 @@
         VkRenderPass renderPass;
         VkExtent2D viewportExtent;
         VkSampleCountFlagBits msaaSamples;
-        
+        int MultiviewLayer = 1;
         VkDevice device;
         bool skinned = false;
       //  VkPipelineCache pipelineCache;

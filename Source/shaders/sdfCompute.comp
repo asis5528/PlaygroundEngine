@@ -1,0 +1,68 @@
+#version 450
+
+layout (local_size_x = 8, local_size_y = 8,local_size_z = 8) in;
+layout (binding = 0, rgba32f) uniform coherent image3D resultImage;
+layout(binding = 1) uniform sampler2D tex;
+float opSmoothSubtraction( float d1, float d2, float k ) {
+    float h = clamp( 0.5 - 0.5*(d2+d1)/k, 0.0, 1.0 );
+    return mix( d2, -d1, h ) + k*h*(1.0-h); }
+	float smin( float a, float b, float k )
+{
+    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
+    return mix( b, a, h ) - k*h*(1.0-h);
+}
+void main()
+{
+vec3 p = vec3(gl_GlobalInvocationID)/64.;
+
+
+vec2 h1 = imageLoad(resultImage,ivec3(gl_GlobalInvocationID)).rg;
+h1.g+=0.005*(1.+h1.g*0.04);
+
+
+float time = h1.g*2.;
+p-=0.5;
+float h = h1.r;
+vec3 q = p;
+float y = sin(time*0.02);
+float off = sin((1.57075-abs(y-0.1)));
+q.y+=y*0.3;
+q.x+=(sin(time)*0.3)*off;
+
+q.z+=(cos(time)*0.3)*off;
+
+
+float eraser  = length(q)-(0.02+time*0.0002);
+//float eraser2 = length(q)-(0.002+time*0.0001);
+h = opSmoothSubtraction(eraser,h,0.03);
+//h = smin(eraser2,h,0.01);
+
+if(h1.g<0.03){
+ h =length(p)-(0.3);
+}
+
+/*
+float fl = floor(h1.g*0.08);
+p.y+=fl*0.1;
+p.x+=fl*0.1;
+p.x+=sin(h1.g*(1.+fl*0.5))*0.05;
+p.z+=cos(h1.g)*0.07;
+p.z+=p.x*p.x*0.07;
+p.y+=sin(h1.g*2.)*0.05;
+p.y+=cos(h1.g*0.5)*0.1;
+float h =length(p)-(0.01);
+
+if(h1.g>0.02){
+
+h = min(h,h1.r);
+
+
+}
+*/
+
+
+	imageStore(resultImage, ivec3(gl_GlobalInvocationID), vec4(h,h1.g,0., 0.0));
+	
+
+
+}

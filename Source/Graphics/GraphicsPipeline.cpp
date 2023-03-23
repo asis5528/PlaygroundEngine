@@ -22,6 +22,23 @@ void GraphicsPipeline::setupPipeline(PipelineInput  pipelineInput) {
     infoLocal.fragShaderStageInfo.module = fragShaderModule;
     infoLocal.fragShaderStageInfo.pName = "main";
 
+
+    
+    if(pipelineInput.MultiviewLayer>1){
+        /*
+        float multiviewArrayLayer = 1.0f;
+        VkSpecializationMapEntry specializationMapEntry{ 0, 0, sizeof(float) };
+
+        VkSpecializationInfo specializationInfo{};
+        specializationInfo.dataSize = sizeof(float);
+        specializationInfo.mapEntryCount = 1;
+        specializationInfo.pMapEntries = &specializationMapEntry;
+        specializationInfo.pData = &multiviewArrayLayer;
+        infoLocal.fragShaderStageInfo.pSpecializationInfo = &specializationInfo;
+        */
+    }
+    
+
     //static VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
     infoLocal.shaderStagess = { infoLocal.vertShaderStageInfo, infoLocal.fragShaderStageInfo };
     // static VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -122,6 +139,7 @@ void GraphicsPipeline::setupPipeline(PipelineInput  pipelineInput) {
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 

@@ -36,8 +36,10 @@
 #include "MathUtils.h"
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 601;
+//for quad to render compute texture
+//const std::string MODEL_PATH = "models/nerd.glb";
 
-const std::string MODEL_PATH = "models/nerd.glb";
+const std::string MODEL_PATH = "models/cube.glb";
 
 const std::string TEXTURE_PATH = "textures/bounds3.png";
 const std::string TEXTURE_PATH2 = "textures/viking_room.png";
@@ -70,6 +72,7 @@ const bool enableValidationLayers = true;
 #include "Graphics/VulkanUtils.h"
 
 
+
 class Vulkan {
 public:
     void run() {
@@ -97,10 +100,25 @@ private:
     VkCommandBuffer computeCommandBuffer;
     VkFence computeFence;
     VulkanTexture ct;
-
+    VulkanTexture3D ct3D;
     vr::IVRSystem *sym;
-  //  Quad *quad;
 
+    clock_t current_ticks, delta_ticks;
+    clock_t fps = 0;
+
+  //  Quad *quad;
+    int computeDimension[3] = { 64,64,64 };
+    struct ComputeData {
+        VkDescriptorSetLayout descriptorSetLayout;
+        VkPipelineLayout pipelineLayout;
+        VkDescriptorSet descriptorSet;
+        VkPipeline computePipeline;
+        VkCommandPool commandPool;
+        VkDescriptorPool computeDescriptorPool;
+
+
+    };
+    ComputeData cd;
     void initWindow() {
         glfwInit();
 
@@ -110,6 +128,7 @@ private:
         window = glfwCreateWindow(WIDTH, HEIGHT, "PlayGround Engine", nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+        glfwSetDropCallback(window, dropCallback);
          
     }
 
@@ -159,7 +178,8 @@ private:
        
         scene->textures.push_back(createTexture(TEXTURE_PATH.c_str()));
         scene->textures.push_back(createTexture(TEXTURE_PATH2.c_str()));
-       // scene->textures.push_back(createTexture3D());
+        //scene->textures.push_back(createTexture3D());
+       
         scene->init();
         
         vulkanImgui = new VulkanImgui(base, window);
@@ -174,8 +194,12 @@ private:
    
       
 
-        //edit object 0 for 3D texture raymarching,you can comment while doing other stuffs
-        /*
+        prepareCompute();
+
+        scene->computeTexture = ct;
+        
+
+        scene->textures.push_back(ct3D);
         scene->objects[0].shader[0].graphicsPipeline = scene->pipelines[4];
         Material material;
         material.type = TexturedMaterial;
@@ -183,9 +207,7 @@ private:
         matData->DiffuseTexture = 2;
         material.materialData = matData;
         scene->materials.push_back(material);
-        scene->meshes[scene->objects[0].meshID[0]].matID = scene->materials.size()-1;
-        */
-
+        scene->meshes[scene->objects[0].meshID[0]].matID = scene->materials.size() - 1;
 
 
 
@@ -193,26 +215,45 @@ private:
        
         scene->createSceneDescriptor();
 
-        prepareCompute();
-       // scene->quads[0]->textures[0] = ct;
-      //  scene->quads[0]->createdescriptors();
+        
+
+        //implementing compute texture to first object mainly for plane object
+        /*
         scene->computeTexture = ct;
         scene->textures.push_back(ct);
 
         MaterialTexturedData* dat = (struct MaterialTexturedData*)scene->materials[scene->meshes[0].matID].materialData;
         dat->DiffuseTexture = scene->textures.size()-1;
+        */
+
+        
+
+        //edit object 0 for 3D texture raymarching,you can comment while doing other stuffs
+
+
 
         createCommandBuffers();
         vulkanImgui->init();
-        
+
+        VulkanTexture guitex;
+        guitex.imageSampler = scene->quads[0]->textures[0].imageSampler;
+        guitex.imageView = scene->framebuffers[1]->MultisampledColorImage->imageView;
+        guitex.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        editorGui->createdescriptor(guitex);
         glfwSetScrollCallback(window, scroll_callback);
+        
         
     }
 
     void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
+            current_ticks = clock();
             glfwPollEvents();
             drawFrame();
+            delta_ticks = clock() - current_ticks; //the time, in ms, that took to render the scene
+            if (delta_ticks > 0)
+                fps = CLOCKS_PER_SEC / delta_ticks;
+          //  std::cout << fps << std::endl;
         }
         
         vkDeviceWaitIdle(base->device);
@@ -227,6 +268,7 @@ private:
 
     void cleanupSwapChain() {
       
+        
         base->swapChain->cleanSwapChain();
       
        // base->offscreenbuffer->clean();
@@ -243,7 +285,15 @@ private:
     void cleanup() {
 
         vr::VR_Shutdown();
-        scene->clean();
+        vkDestroyImageView(base->device,ct3D.imageView, nullptr);
+        vkDestroyImage(base->device, ct3D.image, nullptr);
+        vkFreeMemory(base->device, ct3D.imageMemory, nullptr);
+
+        vkDestroyDescriptorPool(base->device, cd.computeDescriptorPool, nullptr);
+        vkDestroyCommandPool(base->device, cd.commandPool, nullptr);
+        
+        vkDestroyPipeline(base->device, cd.computePipeline, nullptr);
+        scene->clean();;
         delete vulkanImgui;
         delete base;
         
@@ -297,14 +347,9 @@ private:
 
     void prepareCompute() {
 
-        ct = createComputeTexture();
+        ct3D = createComputeTexture3D();
 
-        VkDescriptorSetLayout descriptorSetLayout;
-        VkPipelineLayout pipelineLayout;
-        VkDescriptorSet descriptorSet;
-        VkPipeline computePipeline;
-        VkCommandPool commandPool;
-        VkDescriptorPool computeDescriptorPool;
+        
 
 
         VkDescriptorSetLayoutBinding binding{};
@@ -333,16 +378,16 @@ private:
         layoutInfo.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
         layoutInfo.pBindings = setLayoutBindings.data();
 
-        if (vkCreateDescriptorSetLayout(base->device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+        if (vkCreateDescriptorSetLayout(base->device, &layoutInfo, nullptr, &cd.descriptorSetLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor set layout!");
         }
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 1;
-        pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+        pipelineLayoutInfo.pSetLayouts = &cd.descriptorSetLayout;
 
-        if (vkCreatePipelineLayout(base->device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(base->device, &pipelineLayoutInfo, nullptr, &cd.pipelineLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
 
@@ -352,7 +397,7 @@ private:
        //loading and creating shaderstage is next
         
 
-        auto computeShaderCode = utils::readFile("shaders/compute.spv");
+        auto computeShaderCode = utils::readFile("shaders/sdfCompute.spv");
 
 
         VkShaderModuleCreateInfo createInfo{};
@@ -377,26 +422,26 @@ private:
 
         VkComputePipelineCreateInfo computePipelineCreateInfo{};
         computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-        computePipelineCreateInfo.layout = pipelineLayout;
+        computePipelineCreateInfo.layout = cd.pipelineLayout;
       //  computePipelineCreateInfo.flags = 0;
         computePipelineCreateInfo.stage = shaderStage;
       
-        if (vkCreateComputePipelines(base->device, nullptr,1,&computePipelineCreateInfo,nullptr,&computePipeline) != VK_SUCCESS) {
+        if (vkCreateComputePipelines(base->device, nullptr,1,&computePipelineCreateInfo,nullptr,&cd.computePipeline) != VK_SUCCESS) {
             throw std::runtime_error("failed to create compute pipeline!");
         }
 
            base->vulkandescriptor->createDescriptorPool(2,
             { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER },
-            3, &computeDescriptorPool);
+            3, & cd.computeDescriptorPool);
 
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = computeDescriptorPool;
+        allocInfo.descriptorPool = cd.computeDescriptorPool;
         allocInfo.descriptorSetCount = static_cast<uint32_t>(1);
-        allocInfo.pSetLayouts = &descriptorSetLayout;
+        allocInfo.pSetLayouts = &cd.descriptorSetLayout;
         
        // descriptorSets.resize(size);
-        if (vkAllocateDescriptorSets(base->device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
+        if (vkAllocateDescriptorSets(base->device, &allocInfo, &cd.descriptorSet) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate descriptor sets!");
         }
 
@@ -406,8 +451,8 @@ private:
 
         VkDescriptorImageInfo imageInfo{};
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-        imageInfo.imageView = ct.imageView;
-        imageInfo.sampler = ct.imageSampler;
+        imageInfo.imageView = ct3D.imageView;
+        imageInfo.sampler = ct3D.imageSampler;
 
         VkDescriptorImageInfo imageInfo2{};
         imageInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -416,7 +461,7 @@ private:
 
         VkWriteDescriptorSet writeDescriptorSet{};
         writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.dstSet = cd.descriptorSet;
         writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
         writeDescriptorSet.dstBinding = 0;
         writeDescriptorSet.pImageInfo = &imageInfo;
@@ -424,7 +469,7 @@ private:
         computeWriteDescriptorSets.push_back(writeDescriptorSet);
 
         writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.dstSet = cd.descriptorSet;
         writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         writeDescriptorSet.dstBinding = 1;
         writeDescriptorSet.pImageInfo = &imageInfo2;
@@ -440,13 +485,13 @@ private:
         cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         cmdPoolInfo.queueFamilyIndex = base->vulkandevice->queueID;
         cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        if (vkCreateCommandPool(base->device, &cmdPoolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+        if (vkCreateCommandPool(base->device, &cmdPoolInfo, nullptr, &cd.commandPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create compute command pool!");
         }
 
         VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
         commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        commandBufferAllocateInfo.commandPool = commandPool;
+        commandBufferAllocateInfo.commandPool = cd.commandPool;
         commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         commandBufferAllocateInfo.commandBufferCount = 1;
         if (vkAllocateCommandBuffers(base->device, &commandBufferAllocateInfo, &computeCommandBuffer) != VK_SUCCESS) {
@@ -466,10 +511,10 @@ private:
         if (vkBeginCommandBuffer(computeCommandBuffer, &beginInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
-        vkCmdBindPipeline(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
-        vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, 0, 0);
+        vkCmdBindPipeline(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, cd.computePipeline);
+        vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, cd.pipelineLayout, 0, 1, &cd.descriptorSet, 0, 0);
 
-        vkCmdDispatch(computeCommandBuffer, ct.width / 32, ct.height / 32, 1);
+        vkCmdDispatch(computeCommandBuffer, ct3D.width /8, ct3D.height / 8, ct3D.depth/8);
 
         if (vkEndCommandBuffer(computeCommandBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");
@@ -477,6 +522,39 @@ private:
         float k = 0.;
     }
 
+    VulkanTexture3D createComputeTexture3D() {
+        VulkanTexture3D texture;
+        int width = computeDimension[0];
+        int height = computeDimension[1];
+        int depth = computeDimension[2];
+        texture.width = width;
+        texture.height = height;
+        texture.depth = depth;
+        texture.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+
+        const uint32_t memSize = width * height*depth * 4;
+
+        VulkanImage image = VulkanImage(base->device, base->vulkandevice->physicalDevice);
+
+
+        
+
+        image.createImage(width, height, depth, VK_IMAGE_TYPE_3D,1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+       
+        base->vbuffer->transitionImageLayout(image.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, 1);
+
+    
+
+        image.createImageView(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, 1, VK_IMAGE_VIEW_TYPE_3D);
+
+        texture.image = image.image;
+        texture.imageView = image.imageView;
+        texture.imageMemory = image.imageMemory;
+        //MAKE OWN SAMPLER NEXT TIME AIGHT?
+        texture.imageSampler = scene->textures[0].imageSampler;
+        return texture;
+    }
     VulkanTexture createComputeTexture() {
         VulkanTexture texture;
         int width = 512;
@@ -875,12 +953,13 @@ private:
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || base->swapChain->framebufferResized) {
             base->swapChain->framebufferResized = false;
             recreateSwapChain();
+            editorGui->ds[0] = ImGui_ImplVulkan_AddTexture(scene->quads[0]->textures[0].imageSampler, scene->framebuffers[1]->MultisampledColorImage->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
         else if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image!");
         }
         
-        vkWaitForFences(base->device, 1, &computeFence, VK_TRUE, UINT64_MAX);
+        vkWaitForFences(base->device, 1, &computeFence, VK_TRUE, 100000);
         vkResetFences(base->device, 1, &computeFence);
 
         VkSubmitInfo computeSubmitInfo{};

@@ -20,8 +20,8 @@ class Framebuffer
 		VulkanImage* DepthImage;
 		VulkanImage* MultisampledColorImage;
 		VkFramebuffer framebuffer;
-
-		Framebuffer(VulkanDevice *vulkandevice , uint32_t width, uint32_t height,VkSampleCountFlagBits msaaSamples,VkFormat colorFormat, VkFormat depthFormat);
+		int multiLayerView;
+		Framebuffer(VulkanDevice *vulkandevice , uint32_t width, uint32_t height,VkSampleCountFlagBits msaaSamples,VkFormat colorFormat, VkFormat depthFormat, int MultiLayerView = 1);
 		~Framebuffer();
 		void clean();
 		void recreate();

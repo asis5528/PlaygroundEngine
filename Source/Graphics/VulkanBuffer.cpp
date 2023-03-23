@@ -351,6 +351,7 @@ VkSampler VBuffer::createTextureSampler(uint32_t miplevels) {
     samplerInfo.minLod = 0.0f;
     samplerInfo.maxLod = static_cast<float>(miplevels);
     samplerInfo.mipLodBias = 0.0f;
+    
     VkSampler textureSampler;
     if (vkCreateSampler(vulkandevice->device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
         throw std::runtime_error("failed to create texture sampler!");

@@ -53,7 +53,7 @@ void main() {
     float t = length(camPos)-2.;
     vec4 sum=vec4(0.,0.,0.,0.);
     vec3 rp;
-    for(uint i= 0;i<123;i++){
+    for(uint i= 0;i<32;i++){
         
     
         vec3 p = ro+rd*t;

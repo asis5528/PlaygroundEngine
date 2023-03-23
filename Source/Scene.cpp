@@ -10,10 +10,13 @@ Scene::Scene(VulkanBase* vbase) {
 void Scene::init()
 {
     
-    Framebuffer* frameBuffer = new Framebuffer(base->vulkandevice, base->swapChain->swapChainExtent.width, base->swapChain->swapChainExtent.height, base->vulkandevice->getMaxUsableSampleCount(), base->swapChain->swapChainImageFormat, utils::findDepthFormat(base->vulkandevice->physicalDevice));
+    Framebuffer* frameBuffer = new Framebuffer(base->vulkandevice, base->swapChain->swapChainExtent.width, base->swapChain->swapChainExtent.height, base->vulkandevice->getMaxUsableSampleCount(), base->swapChain->swapChainImageFormat, utils::findDepthFormat(base->vulkandevice->physicalDevice),2);
     framebuffers.push_back(frameBuffer);
 
-    Quad* quad = new Quad(base);
+    Framebuffer* frameBuffer_quad = new Framebuffer(base->vulkandevice, base->swapChain->swapChainExtent.width, base->swapChain->swapChainExtent.height, base->vulkandevice->getMaxUsableSampleCount(), base->swapChain->swapChainImageFormat, utils::findDepthFormat(base->vulkandevice->physicalDevice));
+    framebuffers.push_back(frameBuffer_quad);
+
+    Quad* quad = new Quad(base,framebuffers[1]);
     quad->createGraphicsPipeline("shaders/quadvert.spv", "shaders/quadfrag.spv");
     VulkanTexture quadtex;
     // quadtex.imageView = base->offscreenbuffer->MultisampledColorImage->imageView;
@@ -34,6 +37,7 @@ void Scene::init()
     input.vertexShaderpath = "shaders/vert.spv";
     input.fragmentShaderpath = "shaders/frag.spv";
     input.renderPass = framebuffers[0]->renderPass;
+    input.MultiviewLayer = frameBuffer[0].multiLayerView;
     input.device = base->device;
     input.msaaSamples = base->msaaSamples;
     input.viewportExtent = base->swapChain->swapChainExtent;
@@ -74,7 +78,7 @@ void Scene::init()
     pipelines[3]->bufferSize = { sizeof(SkinnedUniformBufferObject),sizeof(BasicUbo) };
     pipelines[3]->setupPipeline(input);
     pipelines[3]->createGraphicsPipeline();
-    /*
+    
     GraphicsPipeline* volumetric = new GraphicsPipeline();
     pipelines.push_back(volumetric);
     input.skinned = false;
@@ -82,11 +86,11 @@ void Scene::init()
     input.fragmentShaderpath = "shaders/volumetric.spv";
 
     input.descriptorTypes = { descriptorTypes{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT},
-         descriptorTypes{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT},
+         descriptorTypes{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_FRAGMENT_BIT},
          descriptorTypes{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT} };
-    pipelines[4]->bufferSize = { sizeof(UniformBufferObject),sizeof(ubo1) };
+    pipelines[4]->bufferSize = { sizeof(UniformBufferObject),sizeof(BasicUbo) };
     pipelines[4]->setupPipeline(input);
-    pipelines[4]->createGraphicsPipeline();*/
+    pipelines[4]->createGraphicsPipeline();
 }
 
 void Scene::renderPass() {
@@ -101,6 +105,8 @@ void Scene::renderPass() {
         }
 
         // Image memory barrier to make sure that compute shader writes are finished before sampling from the texture
+        //dont need this if compute isnt rendering realtime,its only for syncing the work between compute and graphics
+        /*
         VkImageMemoryBarrier imageMemoryBarrier = {};
         imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -117,9 +123,9 @@ void Scene::renderPass() {
             0, nullptr,
             0, nullptr,
             1, &imageMemoryBarrier);
-
+*/
         framebuffers[0]->beginRenderPass(base->commandBuffers[i]);
-
+        
 
 
 
@@ -138,9 +144,13 @@ void Scene::renderPass() {
 
         vkCmdEndRenderPass(base->commandBuffers[i]);
 
+        framebuffers[1]->beginRenderPass(base->commandBuffers[i]);
+        quads[0]->draw(base->commandBuffers[i]);
+
+        vkCmdEndRenderPass(base->commandBuffers[i]);
 
         base->swapChain->beginRenderPass(base->commandBuffers[i], i);
-        // scene->quads[0]->draw(base->commandBuffers[i]);
+         //quads[0]->draw(base->commandBuffers[i]);
         vkCmdEndRenderPass(base->commandBuffers[i]);
 
 
@@ -171,7 +181,7 @@ void Scene::update() {
     
     ///for non vr////////
     float angle = iTime/3.;
-    angle = 0.;
+    angle = 1.4;
     glm::vec3 camPos = glm::vec3(glm::sin(angle) * offset, glm::cos(angle) * offset, 0.0f);
    view[0] = glm::lookAt(camPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 #endif
@@ -416,6 +426,13 @@ void Scene::recreate()
     framebuffers[0]->height = viewport_resolution.y;
     framebuffers[0]->recreate();
     framebuffers[0]->colorFormat = VK_FORMAT_B8G8R8A8_SRGB;
+
+
+    framebuffers[1]->clean();
+    framebuffers[1]->width = viewport_resolution.x;
+    framebuffers[1]->height = viewport_resolution.y;
+    framebuffers[1]->recreate();
+    //framebuffers[1]->colorFormat = VK_FORMAT_B8G8R8A8_SRGB;
     VkExtent2D ex;
     ex.width = viewport_resolution.x;
     ex.height = viewport_resolution.y;
@@ -425,7 +442,7 @@ void Scene::recreate()
     }
     for (Quad* &quad : quads) {
         quad->graphicsPipeline->clean();
-        quad->graphicsPipeline->recreatePipeline(ex, base->swapChain->renderPass);
+        quad->graphicsPipeline->recreatePipeline(ex, framebuffers[1]->renderPass);
     }
     //uncomment this when needs actual updating the frame texture
     quads[0]->textures[0].imageView = framebuffers[0]->MultisampledColorImage->imageView;

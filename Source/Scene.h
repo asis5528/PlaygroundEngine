@@ -23,7 +23,8 @@ public:
 	VulkanBase* base;
 	glm::mat4 proj[2];
 	glm::mat4 view[2];
-	float offset = 1.5;
+	float offset = 2.;
+
 
 	Scene(VulkanBase *vbase);
 	void init();

@@ -1,8 +1,9 @@
 #include "quad.h"
 
-Quad::Quad(VulkanBase* vbase)
+Quad::Quad(VulkanBase* vbase,Framebuffer *fr)
 {
 	this->base = vbase;
+    this->fr = fr;
 }
 
 Quad::~Quad() {
@@ -17,7 +18,7 @@ void Quad::createGraphicsPipeline(std::string vshaderpath, std::string fshaderpa
     input.device = base->device;
     input.vertexShaderpath = vshaderpath;
     input.fragmentShaderpath = fshaderpath;
-    input.renderPass = base->swapChain->renderPass;
+    input.renderPass = this->fr->renderPass;
     input.msaaSamples = base->msaaSamples;
     input.viewportExtent = base->swapChain->swapChainExtent;
     input.descriptorTypes = { descriptorTypes{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT} };

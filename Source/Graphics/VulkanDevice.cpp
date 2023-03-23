@@ -72,15 +72,22 @@ void VulkanDevice::createLogicalDevice() {
     queueCreateInfo.pQueuePriorities = &queuePriority;
     queueCreateInfos.push_back(queueCreateInfo);
     
+    
+     
+    VkPhysicalDeviceMultiviewFeatures features{};
+    features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES;
+    features.multiview = VK_TRUE;
+  //  vkphysicandevicevulkan
     VkPhysicalDeviceFeatures deviceFeatures{};
+    
     deviceFeatures.samplerAnisotropy = VK_TRUE;
-
+    deviceFeatures.multiViewport = VK_TRUE;
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
+    createInfo.pNext = &features;
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
+    
     createInfo.pEnabledFeatures = &deviceFeatures;
 
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());

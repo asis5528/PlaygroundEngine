@@ -3,25 +3,28 @@
 
 
 
+
 VulkanImgui::VulkanImgui(VulkanBase* base, GLFWwindow* window) {
 	this->base = base;
     this->window = window;
 	ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
 	IMGUI_CHECKVERSION();
+    
     createImguiRenderPass();
     createFramebuffers();
     createCommandBuffers();
     createDescriptorPool();
-   
+  
 }
 
 VulkanImgui::~VulkanImgui()
 {
     cleanFrameBuffers();
-   
+  
    
     vkDestroyDescriptorPool(base->vulkandevice->device,imguiDescriptorPool, nullptr);
     ImGui_ImplVulkan_Shutdown();
+    
 }
 void VulkanImgui::cleanFrameBuffers()
 {
@@ -36,6 +39,7 @@ void VulkanImgui::init() {
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForVulkan(window, true);
     ImGui_ImplVulkan_InitInfo init_info = {};
+    
     init_info.Instance = base->vkinstance;
     init_info.PhysicalDevice = base->vkPhysicalDevice;
     init_info.Device = base->device;

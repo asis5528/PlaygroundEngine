@@ -11,6 +11,10 @@
      m_base(base){
 	//this->scene = scene;
 }
+ void EditorGui::createdescriptor(VulkanTexture &tex) {
+     ds.push_back(ImGui_ImplVulkan_AddTexture(tex.imageSampler,tex.imageView,tex.imageLayout));
+
+ }
  void EditorGui::run() {
 	 setupStyle();
      setupGui();
@@ -50,6 +54,20 @@
      }
  }
  void EditorGui::setupGui() {
+     /*
+    if(frameID<3){
+   m_scene->viewport_resolution.x = 512;
+   m_scene->viewport_resolution.y = 512;
+   vkDeviceWaitIdle(m_base->device);
+   m_scene->recreate();
+   m_scene->renderPass();
+   }
+   ImGui::Begin("Demo window");
+   ImGui::Button("Hello!");
+   ImGui::End();
+
+
+   */
      ImGui::Begin("DockSpace", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar);
 
      ImGui::SetWindowSize(ImVec2(m_base->swapChain->swapChainExtent.width, m_base->swapChain->swapChainExtent.height));
@@ -107,6 +125,7 @@
          vkDeviceWaitIdle(m_base->device);
          m_scene->recreate();
          m_scene->renderPass();
+         ds[0] = ImGui_ImplVulkan_AddTexture(m_scene->quads[0]->textures[0].imageSampler, m_scene->framebuffers[1]->MultisampledColorImage->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
          //  vkDeviceWaitIdle(base->device);
            //cleanCommandBuffers();
          //  scene->framebuffers[0]->clean();
@@ -126,8 +145,9 @@
          viewport_node->WantHiddenTabBarToggle = true;
      }
      ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-     
-     ImGui::Image(m_scene->quads[0]->descriptorSet, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });
+     //ImGui_ImplVulkan_AddTexture
+  //   ImGui::Image(m_scene->quads[0]->descriptorSet, ImVec2{ viewportPanelSize.x, viewportPanelSize.y });
+     ImGui::Image(ds[0], ImVec2{ viewportPanelSize.x, viewportPanelSize.y });
      ImGui::End();
 
      ImGui::Begin("tools");

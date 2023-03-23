@@ -1,11 +1,12 @@
 #include "Framebuffer.h"
 #include "VulkanUtils.h"
 #include <stdexcept>
-
-Framebuffer::Framebuffer(VulkanDevice *vulkandevice , uint32_t width, uint32_t height, VkSampleCountFlagBits msaaSamples, VkFormat colorFormat, VkFormat depthFormat) {
+//REMEMBER TO NO APPLY MULTISAMPLED COLOR FOR NO MSAA SAMPLES FRAMEBUFFERS FOR OPTIMIZATION
+Framebuffer::Framebuffer(VulkanDevice *vulkandevice , uint32_t width, uint32_t height, VkSampleCountFlagBits msaaSamples, VkFormat colorFormat, VkFormat depthFormat,int MultiLayerView) {
 	this->width = width;
 	this->height = height;
     this->vulkandevice = vulkandevice;
+    this->multiLayerView = MultiLayerView;
    // this->device = device;
     //this->physicalDevice = physicalDevice;
     this->msaaSamples = msaaSamples;
@@ -108,24 +109,24 @@ void Framebuffer::createRenderPass() {
     renderPassInfo.pSubpasses = &subpass;
     renderPassInfo.dependencyCount = dependencies.size();
     renderPassInfo.pDependencies = dependencies.data();
+    if(multiLayerView>1){
+        const uint32_t viewMask = 0b00000011;
 
-    const uint32_t viewMask = 0b00000011;
+        /*
+            Bit mask that specifies correlation between views
+            An implementation may use this for optimizations (concurrent render)
+        */
+        const uint32_t correlationMask = 0b00000011;
 
-    /*
-        Bit mask that specifies correlation between views
-        An implementation may use this for optimizations (concurrent render)
-    */
-    const uint32_t correlationMask = 0b00000011;
+        VkRenderPassMultiviewCreateInfo renderPassMultiviewCI{};
+        renderPassMultiviewCI.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
+        renderPassMultiviewCI.subpassCount = 1;
+        renderPassMultiviewCI.pViewMasks = &viewMask;
+        renderPassMultiviewCI.correlationMaskCount = 1;
+        renderPassMultiviewCI.pCorrelationMasks = &correlationMask;
 
-    VkRenderPassMultiviewCreateInfo renderPassMultiviewCI{};
-    renderPassMultiviewCI.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
-    renderPassMultiviewCI.subpassCount = 1;
-    renderPassMultiviewCI.pViewMasks = &viewMask;
-    renderPassMultiviewCI.correlationMaskCount = 1;
-    renderPassMultiviewCI.pCorrelationMasks = &correlationMask;
-
-    renderPassInfo.pNext = &renderPassMultiviewCI;
- 
+        renderPassInfo.pNext = &renderPassMultiviewCI;
+    }
     if (vkCreateRenderPass(vulkandevice->device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
         throw std::runtime_error("failed to create render pass!");
     }
@@ -134,18 +135,25 @@ void Framebuffer::createRenderPass() {
 void Framebuffer::createFrameBuffer() {
     //Coz of multiview for vr,layer is assigned 2 and imageview type is a 2D array...change the code to make compatible for anytype of framebuffer textures in future
    
-    int multiviewLayer = 2;
+    //int multiviewLayer = 2;
+    VkImageViewType viewType;
+    if (multiLayerView >1) {
+        viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    }
+    else {
+        viewType = VK_IMAGE_VIEW_TYPE_2D;
+    }
     ColorImage = new VulkanImage(vulkandevice->device, vulkandevice->physicalDevice);
-    ColorImage->createImage(width, height,1, VK_IMAGE_TYPE_2D,1, this->msaaSamples, colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, multiviewLayer);
-    ColorImage->createImageView(colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1, VK_IMAGE_VIEW_TYPE_2D_ARRAY, multiviewLayer);
+    ColorImage->createImage(width, height,1, VK_IMAGE_TYPE_2D,1, this->msaaSamples, colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, multiLayerView);
+    ColorImage->createImageView(colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1, viewType, multiLayerView);
 
     MultisampledColorImage = new VulkanImage(vulkandevice->device, vulkandevice->physicalDevice);
-    MultisampledColorImage->createImage(width, height,1, VK_IMAGE_TYPE_2D, 1, VK_SAMPLE_COUNT_1_BIT, colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, multiviewLayer);
-    MultisampledColorImage->createImageView(colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1, VK_IMAGE_VIEW_TYPE_2D_ARRAY, multiviewLayer);
-
+    MultisampledColorImage->createImage(width, height,1, VK_IMAGE_TYPE_2D, 1, VK_SAMPLE_COUNT_1_BIT, colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, multiLayerView);
+    MultisampledColorImage->createImageView(colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1, viewType, multiLayerView);
+    
     DepthImage = new VulkanImage(vulkandevice->device, vulkandevice->physicalDevice);
-    DepthImage->createImage(width, height,1, VK_IMAGE_TYPE_2D, 1,this->msaaSamples, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, multiviewLayer);
-    DepthImage->createImageView(depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, VK_IMAGE_VIEW_TYPE_2D_ARRAY, multiviewLayer);
+    DepthImage->createImage(width, height,1, VK_IMAGE_TYPE_2D, 1,this->msaaSamples, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, multiLayerView);
+    DepthImage->createImageView(depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, viewType, multiLayerView);
 
     std::array<VkImageView, 3>attachments = { ColorImage->imageView,DepthImage->imageView,MultisampledColorImage->imageView };
     VkFramebufferCreateInfo framebufferInfo{};
@@ -176,7 +184,7 @@ void Framebuffer::beginRenderPass(VkCommandBuffer commandBuffer) {
     renderPassInfo.renderArea.extent = resolution;
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+    clearValues[0].color = { {0.8f, 0.8f, 0.8f, 1.8f} };
     clearValues[1].depthStencil = { 1.0f, 0 };
 
 
