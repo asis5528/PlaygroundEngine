@@ -4,12 +4,12 @@ struct UBO {
 	VkBuffer buffer;
 	VkDeviceMemory bufferMemory;
 	uint64_t size;
-	void map(const VkDevice *device, uint64_t size,void* ubo) {
+	void map(const VkDevice device, uint64_t size,void* ubo) {
 		void* data;
-		vkMapMemory(*device, bufferMemory, 0, size, 0, &data);
+		vkMapMemory(device, bufferMemory, 0, size, 0, &data);
 		//void* k = &ubo;
 		memcpy(data, ubo, size);
-		vkUnmapMemory(*device, bufferMemory);
+		vkUnmapMemory(device, bufferMemory);
 
 		}
 
@@ -43,4 +43,10 @@ struct ubo1 {
 
 struct BasicUbo {
 	glm::vec4 color;
+};
+
+struct computeUbo {
+	glm::vec4 data;
+	float time;
+
 };

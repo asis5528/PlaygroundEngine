@@ -138,7 +138,7 @@ void VulkanBase::pickPhysicalDevice() {
     }
     */
    
-    vkPhysicalDevice = devices[1];
+    vkPhysicalDevice = devices[0];
     VkPhysicalDeviceProperties p;
     vkGetPhysicalDeviceProperties(vkPhysicalDevice, &p);
     if (vkPhysicalDevice == VK_NULL_HANDLE) {

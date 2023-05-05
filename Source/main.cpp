@@ -61,10 +61,12 @@ const bool enableValidationLayers = true;
 #include "Graphics/Mesh.h"
 #include"Graphics/VulkanBase.h"
 #include "Graphics/IMGUI/VulkanImgui.h"
+
 #include "Object.h"
 #include "quad.h"
 //uncomment to enable VR
-//#define VR
+ //#define VR
+#include "Graphics/ComputePipeline.h"
 #include "Scene.h"
 #include "Loader.h"
 #include "GUI/EditorGui.h"
@@ -97,28 +99,18 @@ private:
 
     VkDescriptorPool descriptorPool;
 
-    VkCommandBuffer computeCommandBuffer;
-    VkFence computeFence;
+    
     VulkanTexture ct;
     VulkanTexture3D ct3D;
     vr::IVRSystem *sym;
 
     clock_t current_ticks, delta_ticks;
     clock_t fps = 0;
-
+    std::vector<UBO> computeUBO;
   //  Quad *quad;
-    int computeDimension[3] = { 64,64,64 };
-    struct ComputeData {
-        VkDescriptorSetLayout descriptorSetLayout;
-        VkPipelineLayout pipelineLayout;
-        VkDescriptorSet descriptorSet;
-        VkPipeline computePipeline;
-        VkCommandPool commandPool;
-        VkDescriptorPool computeDescriptorPool;
+    int computeDimension[3] = { 128,128,128 };
 
-
-    };
-    ComputeData cd;
+    ComputePipeline *comp;
     void initWindow() {
         glfwInit();
 
@@ -154,6 +146,10 @@ private:
     {
         auto app = reinterpret_cast<Vulkan*>(glfwGetWindowUserPointer(window));
         app->scene->offset -= float(yoffset)*0.1;
+    }
+
+    static void  mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+        std::cout << xpos << "\n";
     }
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
@@ -201,6 +197,7 @@ private:
 
         scene->textures.push_back(ct3D);
         scene->objects[0].shader[0].graphicsPipeline = scene->pipelines[4];
+        //scene->objects[0].ModelMatrix = glm::translate(scene->objects[0].ModelMatrix, glm::vec3(0., 1., 0.));
         Material material;
         material.type = TexturedMaterial;
         MaterialTexturedData* matData = new MaterialTexturedData();
@@ -241,7 +238,7 @@ private:
         guitex.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         editorGui->createdescriptor(guitex);
         glfwSetScrollCallback(window, scroll_callback);
-        
+      //  glfwSetCursorPosCallback(window, mouse_callback);
         
     }
 
@@ -249,6 +246,7 @@ private:
         while (!glfwWindowShouldClose(window)) {
             current_ticks = clock();
             glfwPollEvents();
+            
             drawFrame();
             delta_ticks = clock() - current_ticks; //the time, in ms, that took to render the scene
             if (delta_ticks > 0)
@@ -289,10 +287,6 @@ private:
         vkDestroyImage(base->device, ct3D.image, nullptr);
         vkFreeMemory(base->device, ct3D.imageMemory, nullptr);
 
-        vkDestroyDescriptorPool(base->device, cd.computeDescriptorPool, nullptr);
-        vkDestroyCommandPool(base->device, cd.commandPool, nullptr);
-        
-        vkDestroyPipeline(base->device, cd.computePipeline, nullptr);
         scene->clean();;
         delete vulkanImgui;
         delete base;
@@ -344,7 +338,20 @@ private:
         return texture;
 
     }
+    void prepareCompute() {
 
+        ct3D = createComputeTexture3D();
+        computeUBO = base->vbuffer->createUniformBuffers({sizeof(computeUbo)});
+
+        ComputeInput input;
+        input.computeShaderPath = "shaders/sdfCompute.spv";
+        input.descriptorTypes = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE ,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER ,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER};
+        
+        comp = new ComputePipeline(base,input);
+        comp->setupDescriptors(computeUBO,{ct3D,scene->textures[0]});
+        comp->dispatch(ct3D.width / 8, ct3D.height / 8, ct3D.depth / 8);
+    }
+    /*
     void prepareCompute() {
 
         ct3D = createComputeTexture3D();
@@ -501,7 +508,7 @@ private:
         fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        if (vkCreateFence(base->device, &fenceCreateInfo, nullptr, &computeFence) != VK_SUCCESS) {
+        if (vkCreateFence(base->device, &fenceCreateInfo, nullptr, &cd.computeFence) != VK_SUCCESS) {
             throw std::runtime_error("failed to create compute fence!");
         }
 
@@ -520,7 +527,7 @@ private:
             throw std::runtime_error("failed to record command buffer!");
         }
         float k = 0.;
-    }
+    }*/
 
     VulkanTexture3D createComputeTexture3D() {
         VulkanTexture3D texture;
@@ -531,7 +538,8 @@ private:
         texture.height = height;
         texture.depth = depth;
         texture.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-
+        texture.imageType = VK_IMAGE_TYPE_3D;
+        texture.imageViewType = VK_IMAGE_VIEW_TYPE_3D;
 
         const uint32_t memSize = width * height*depth * 4;
 
@@ -733,7 +741,7 @@ private:
             pos = glm::rotate(pos, -3.1415f / 2.f, glm::vec3(1, 0, 0));
 
             viewpos = glm::inverse(viewpos);
-            // viewpos = glm::translate(viewpos, glm::vec3(0, 0, -3));
+             viewpos = glm::translate(viewpos, glm::vec3(0., 0, -1.5));
 
             glm::vec3 position, scale, skew;
             glm::quat rot;
@@ -741,7 +749,8 @@ private:
             glm::mat4 k = glm::inverse(viewpos);
 
             glm::decompose(viewpos, scale, rot, position, skew, pers);
-
+            std::cout << position.x << " " << position.y << " " << position.z << "\n";
+            scene->camPos = glm::vec3(position.x,position.z,-position.y);
             //  std::cout << position.x << " " << position.y << " " << position.z << "\n";
              // scene->objects[0].finalMatrix = glm::translate(glm::mat4(1.),glm::vec3(position.x,position.y, position.z));
 
@@ -773,9 +782,9 @@ private:
                 if (obj.hasMesh) {
 
                     if (scene->meshes[obj.meshID[0]].bones.size() > 1) {
-                        obj.finalMatrix = con * obj.ModelMatrix;
-                        obj.finalMatrix = glm::rotate(obj.finalMatrix, -3.1415f / 1.f, glm::vec3(1, 0, 0));
-                        obj.finalMatrix = glm::scale(obj.finalMatrix, glm::vec3(0.0025, 0.0025, 0.0025));
+                     //   obj.finalMatrix = con * obj.ModelMatrix;
+                     //   obj.finalMatrix = glm::rotate(obj.finalMatrix, -3.1415f / 1.f, glm::vec3(1, 0, 0));
+                       // obj.finalMatrix = glm::scale(obj.finalMatrix, glm::vec3(0.0025, 0.0025, 0.0025));
                     }
                 }
             }
@@ -847,7 +856,7 @@ private:
         vData.m_nQueueFamilyIndex = base->vulkandevice->queueID;
         vData.m_nWidth = scene->viewport_resolution.x;
         vData.m_nHeight = scene->viewport_resolution.y;
-        vData.m_nFormat = base->swapChain->swapChainImageFormat;
+        vData.m_nFormat = VK_FORMAT_R8G8B8A8_SRGB;
         vData.m_nSampleCount = 1;
         vData.m_unArraySize = 2;
         vData.m_unArrayIndex = 0;
@@ -914,6 +923,14 @@ private:
 
     }
     void drawFrame() {
+
+
+        static auto startTime = std::chrono::high_resolution_clock::now();
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+      //  float iTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        static float iTime = 0.;
+        iTime += 0.02;
         static int frameid = 0;
     
       //  if (frameid == 0) {
@@ -922,6 +939,14 @@ private:
         time += 0.1;
             
         vulkanImgui->newFrame();
+        ImVec2 screen_pos = ImGui::GetMousePos();
+        static ImVec2 mousex = screen_pos;
+        
+        glm::vec2 mosue_delta =glm::vec2(  screen_pos.x - mousex.x, screen_pos.y - mousex.y);
+        mousex = screen_pos;
+     //   std::cout << n << "\n";
+
+
         editorGui->run();
         vr::VREvent_t event;
         //sym->PollNextEvent(&event, sizeof(event));
@@ -929,13 +954,13 @@ private:
         uint32_t imageIndex = base->getFrameIndex();
 
         //IMGUI/////////////
-
+  
         vulkanImgui->draw(imageIndex);
 
 #ifdef VR
         VRsetup();
 #endif
-        scene->update();
+        scene->update(iTime);
 
 
         updateUniformBuffer(0);
@@ -958,9 +983,9 @@ private:
         else if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image!");
         }
-        
-        vkWaitForFences(base->device, 1, &computeFence, VK_TRUE, 100000);
-        vkResetFences(base->device, 1, &computeFence);
+        /*
+        vkWaitForFences(base->device, 1, &comp->computeFence, VK_TRUE, 100000);
+        vkResetFences(base->device, 1, &cd.computeFence);
 
         VkSubmitInfo computeSubmitInfo{};
         computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -968,9 +993,37 @@ private:
         computeSubmitInfo.pCommandBuffers = &computeCommandBuffer;
 
 
-        if (vkQueueSubmit(base->queue, 1, &computeSubmitInfo, computeFence) != VK_SUCCESS) {
+        if (vkQueueSubmit(base->queue, 1, &computeSubmitInfo, &comp->computeFence) != VK_SUCCESS) {
             throw std::runtime_error("failed to sumbit queue!");
         }
+        */
+        static glm::vec4 storedata(0.0,-0.2,0.,0.);
+        storedata.z = mosue_delta.x * 0.001 + storedata.z;
+        storedata.y = mosue_delta.y * 0.002 + storedata.y;
+         computeUbo cubo;
+         cubo.time = iTime;
+         cubo.data = glm::vec4(-0.0, 0., -0.3, -1.);
+         cubo.data.z += storedata.z;
+         cubo.data.y += storedata.y;
+         if (ImGui::GetIO().KeyCtrl) {
+             storedata.z += 0.001;
+
+         }
+         else if (ImGui::GetIO().KeyAlt) {
+             storedata.z -= 0.001;
+
+         }
+         else if (ImGui::GetIO().KeyShift) {
+             cubo.data.a = 1.5;
+         }
+         else if (ImGui::GetIO().KeySuper) {
+             cubo.data.a = -1.5;
+         }
+      
+         cubo.data.x -= storedata.z;
+        std::cout << cubo.data.a << "\n";
+        computeUBO[0].map(base->device, sizeof(computeUbo), &cubo);
+        comp->submit();
         float k = 1.;
     }
     

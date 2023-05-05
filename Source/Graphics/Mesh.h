@@ -100,8 +100,8 @@ struct VulkanTexture {
 };
 struct VulkanTexture3D : VulkanTexture {
     uint32_t depth;
-    VkImageType imageType = VK_IMAGE_TYPE_3D;
-    VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_3D;
+  //  VkImageType imageType = VK_IMAGE_TYPE_3D;
+  //  VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_3D;
 };
 
 struct Texture {

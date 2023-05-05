@@ -23,12 +23,13 @@ public:
 	VulkanBase* base;
 	glm::mat4 proj[2];
 	glm::mat4 view[2];
+	glm::vec3 camPos;
 	float offset = 2.;
 
 
 	Scene(VulkanBase *vbase);
 	void init();
-	void update();
+	void update(float time);
 	void renderPass();
 	void createSceneDescriptor();
 	void cleanUniforms();

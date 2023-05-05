@@ -163,11 +163,8 @@ void Scene::renderPass() {
    
 }
 
-void Scene::update() {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float iTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+void Scene::update(float iTime) {
+   
     float time = iTime;
     
   
@@ -176,6 +173,7 @@ void Scene::update() {
     }
 #ifndef VR
     ///for non vr////////
+    
     proj[0] = glm::perspective(glm::radians(45.0f), (float)viewport_resolution.x / (float)viewport_resolution.y, 0.1f, 1000.0f);
     // offset =1.5;
     
@@ -185,6 +183,7 @@ void Scene::update() {
     glm::vec3 camPos = glm::vec3(glm::sin(angle) * offset, glm::cos(angle) * offset, 0.0f);
    view[0] = glm::lookAt(camPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 #endif
+  //  glm::vec3 camPos;
     UniformBufferObject ubo{};
     glm::mat4 k;
 
@@ -252,14 +251,14 @@ void Scene::update() {
                    
                     subo.model = object.finalMatrix;
                     subo.model = glm::scale(subo.model, glm::vec3(3, 3, 3));
-                        object.shader[meshID].ubos[0].map(&base->device, sizeof(subo), &subo);
+                        object.shader[meshID].ubos[0].map(base->device, sizeof(subo), &subo);
                         if (mesh->texID >= 0) {
-                            object.shader[meshID].ubos[1].map(&base->device, sizeof(u), &u);
+                            object.shader[meshID].ubos[1].map(base->device, sizeof(u), &u);
                         }
                         else {
                             BasicUbo bubo{};
                             bubo.color = mesh->color;
-                            object.shader[meshID].ubos[1].map(&base->device, sizeof(bubo), &bubo);
+                            object.shader[meshID].ubos[1].map(base->device, sizeof(bubo), &bubo);
                         }
                         
                    // }
@@ -272,16 +271,16 @@ void Scene::update() {
 
                     for (int i = 0; i < object.meshID.size(); i++) {
                         Mesh* mesh = &meshes[object.meshID[i]];
-                        object.shader[i].ubos[0].map(&base->device, sizeof(ubo), &ubo);
+                        object.shader[i].ubos[0].map(base->device, sizeof(ubo), &ubo);
                         if (mesh->texID >= 0) {
-                            object.shader[i].ubos[1].map(&base->device, sizeof(u), &u);
+                            object.shader[i].ubos[1].map(base->device, sizeof(u), &u);
                         }
                         else {
                             BasicUbo bubo{};
                             // bubo.color = mesh->color;
                             bubo.color = glm::inverse(ubo.model)* glm::vec4(camPos, 1.);
                             bubo.color.a = iTime;
-                            object.shader[i].ubos[1].map(&base->device, sizeof(bubo), &bubo);
+                            object.shader[i].ubos[1].map(base->device, sizeof(bubo), &bubo);
                         }
                     }
                 }

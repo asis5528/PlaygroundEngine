@@ -17,11 +17,13 @@ layout(location = 2) in vec2 inTexCoord;
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out vec3 localCoord;
+
 void main() {
 
 vec3 v = inPosition;
 //v.xyz+=(inColor.xyz*0.1)*0.6;
     gl_Position = ubo.proj[gl_ViewIndex] * ubo.view[gl_ViewIndex] * ubo.model * vec4(v, 1.0);
+
    // gl_Position = vec4(v, 1.0);
     fragColor = inColor;
     fragTexCoord = inTexCoord;
