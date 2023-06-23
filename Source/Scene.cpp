@@ -178,9 +178,10 @@ void Scene::update(float iTime) {
     // offset =1.5;
     
     ///for non vr////////
-    float angle = iTime/3.;
-    angle = 1.4;
-    glm::vec3 camPos = glm::vec3(glm::sin(angle) * offset, glm::cos(angle) * offset, 0.0f);
+    float angle = sin(iTime/30.)*0.3;
+    float an = sin(iTime / 12.) * 0.3;
+   // angle = 1.4;
+    glm::vec3 camPos = glm::vec3(glm::sin(angle) * offset, glm::cos(angle) * offset, glm::sin(an)*0.);
    view[0] = glm::lookAt(camPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 #endif
   //  glm::vec3 camPos;

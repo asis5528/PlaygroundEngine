@@ -160,6 +160,7 @@
     <None Include="shaders\Basic.frag" />
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
+    <None Include="shaders\sdfCompute _pottery.comp" />
     <None Include="shaders\sdfCompute.comp" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
@@ -170,6 +171,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="ComputeShaderPipelines.cpp" />
+    <ClCompile Include="Graphics\ComputePipeline.cpp" />
     <ClCompile Include="GUI\EditorGui.cpp" />
     <ClCompile Include="Graphics\GraphicsPipeline.cpp" />
     <ClCompile Include="Graphics\Framebuffer.cpp" />
@@ -202,6 +205,8 @@
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationData.h" />
+    <ClInclude Include="ComputeShaderPipelines.h" />
+    <ClInclude Include="Graphics\ComputePipeline.h" />
     <ClInclude Include="GUI\EditorGui.h" />
     <ClInclude Include="Graphics\GraphicsPipeline.h" />
     <ClInclude Include="Graphics\Framebuffer.h" />

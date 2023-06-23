@@ -8,3 +8,4 @@ C:/VulkanSDK/1.2.189.2/Bin/glslc.exe shaders/volumetric.vert -o shaders/volumetr
 C:/VulkanSDK/1.2.189.2/Bin/glslc.exe shaders/volumetric.frag -o shaders/volumetric.spv
 C:/VulkanSDK/1.2.189.2/Bin/glslc.exe shaders/simple.comp -o shaders/compute.spv
 C:/VulkanSDK/1.2.189.2/Bin/glslc.exe shaders/sdfCompute.comp -o shaders/sdfCompute.spv 
+C:/VulkanSDK/1.2.189.2/Bin/glslc.exe shaders/sdfCompute2.comp -o shaders/sdfCompute2.spv

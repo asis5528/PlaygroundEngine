@@ -28,6 +28,7 @@
     <None Include="shaders\volumetric.vert" />
     <None Include="shaders\simple.comp" />
     <None Include="shaders\sdfCompute.comp" />
+    <None Include="shaders\sdfCompute _pottery.comp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -117,6 +118,12 @@
     <ClCompile Include="Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\ComputePipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputeShaderPipelines.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Imgui\imconfig.h">
@@ -169,5 +176,7 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="GUI\EditorGui.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="Graphics\ComputePipeline.h" />
+    <ClInclude Include="ComputeShaderPipelines.h" />
   </ItemGroup>
 </Project>

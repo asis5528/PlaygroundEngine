@@ -1,4 +1,9 @@
 #pragma once
+#ifndef MESH_H
+#define MESH_H
+
+
+
 #include <vector>
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
@@ -89,6 +94,7 @@ struct VulkanTexture {
     uint32_t mipLevels;
     uint32_t width;
     uint32_t height;
+    uint32_t depth;
     VkImage image;
     VkDeviceMemory imageMemory;
     VkImageView imageView;
@@ -99,7 +105,7 @@ struct VulkanTexture {
     void destroy();
 };
 struct VulkanTexture3D : VulkanTexture {
-    uint32_t depth;
+    
   //  VkImageType imageType = VK_IMAGE_TYPE_3D;
   //  VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_3D;
 };
@@ -114,3 +120,4 @@ struct Texture {
 
 
 
+#endif

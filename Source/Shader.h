@@ -45,8 +45,3 @@ struct BasicUbo {
 	glm::vec4 color;
 };
 
-struct computeUbo {
-	glm::vec4 data;
-	float time;
-
-};

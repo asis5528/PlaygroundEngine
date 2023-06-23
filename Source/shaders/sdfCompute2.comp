@@ -1,0 +1,82 @@
+#version 450
+
+layout (local_size_x = 8, local_size_y = 8,local_size_z = 8) in;
+layout (binding = 0, rgba32f) uniform coherent image3D resultImage;
+layout(binding = 1) uniform sampler3D tex;
+layout (binding = 2, rgba32f) uniform coherent image3D resultImage2;
+layout(binding = 3) uniform sampler3D tex2;
+layout(binding = 4) uniform computeUbo {
+vec4 data;
+    float time;
+    int Frame;
+} ubo;
+
+
+float opSmoothSubtraction( float d1, float d2, float k ) {
+    float h = clamp( 0.5 - 0.5*(d2+d1)/k, 0.0, 1.0 );
+    return mix( d2, -d1, h ) + k*h*(1.0-h); }
+	float smin( float a, float b, float k )
+{
+    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
+    return mix( b, a, h ) - k*h*(1.0-h);
+}
+
+#define R textureSize(tex,0)
+vec4 T(vec3 U){
+
+    return texture(tex,(U+0.5)/R);
+}
+
+vec4 T2(vec3 U){
+
+    return texture(tex2,(U+0.5)/R);
+}
+void main()
+{
+ivec3 dims = imageSize(resultImage);
+vec3 U = vec3(gl_GlobalInvocationID);
+vec3 p = vec3(gl_GlobalInvocationID)/vec3(dims);
+float time = ubo.time;
+p-=0.5;
+
+vec3 q = p;
+
+
+vec4 O = T(U+T(U).xyz*0.5);
+float den = T2(U+T(U).xyz).x;
+vec4 a,b,c,d,e,f;
+    
+    a = T(U+vec3(1.,0.,0));
+    b = T(U+vec3(0.,1.,0.));
+    c = T(U+vec3(-1.,0.,0.));
+    d = T(U+vec3(0.,-1.,0.));
+    e = T(U+vec3(0.,0.,1.));
+    f = T(U+vec3(0.,0.,-1.));
+    float kd = 0.;
+    if(den>0.01){
+    kd = 1.0;
+    }
+    O = vec4(O.x+(a.w-c.w)*1.,O.y+(b.w-d.w)*1.-0.00*den,O.z+(e.w-f.w)*1.,(a.w+b.w+c.w+d.w+e.w+f.w)*0.16666667-(c.x-a.x+d.y-b.y+f.z-e.z)*0.025);
+    //den*=0.99;
+
+if(length(p-vec3(-0.0,0.,0.))<0.04){
+    O = vec4(-0.0,-0.3,0.0,0.0);
+    den = 1.;
+    }
+    
+
+   if(abs(p.y)>0.49){
+        O.xyz*=0.;
+   }
+    if(abs(p.x)>0.49){
+        O.xyz*=0.;
+   }
+    if(abs(p.z)>0.49){
+        O.xyz*=0.;
+   }
+    
+	imageStore(resultImage, ivec3(gl_GlobalInvocationID), O);
+	
+    imageStore(resultImage2, ivec3(gl_GlobalInvocationID), vec4(den,0.,0.,0.));
+
+}

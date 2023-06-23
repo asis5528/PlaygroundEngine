@@ -33,10 +33,10 @@ q.z+=(cos(time)*0.3)*off;
 float mat = 0.;
 vec3 pq = p;
 pq+=h1.gba;
-float eraser  = length(pq)-(0.02+time*0.0002);
+float eraser  = length(pq)-(0.02);
 
 float d =  h1.r;
-if(eraser<d&&time<160.){
+if(eraser<d&&time>0.){
 mat = 1.5;
 d = eraser;
 }
@@ -52,7 +52,25 @@ vec3 calcNormal( in vec3 pos )
            map(pos+eps.yyx).x - map(pos-eps.yyx).x ) );
            }
 
+vec4 rndC(vec3 u) {
+    vec3 R = vec3(128.,128.,128.),
+         U = u*R + .5,
+         F = fract(U);
+    U = floor(U) + F*F*(3.-2.*F); 
+ // U = floor(U) + F*F*F*(F*(F*6.-15.)+10.);   // use if you want smooth gradients
+    return texture( texSampler, u );
+}
+vec3 norm(vec3 u){
+    float ep = 0.000001;
+    return normalize(vec3(
+    rndC(vec3(u.x+ep,u.y,u.z)).w-rndC(vec3(u.x-ep,u.y,u.z)).w,
+    rndC(vec3(u.x,u.y+ep,u.z)).w-rndC(vec3(u.x,u.y-ep,u.z)).w,
+    rndC(vec3(u.x,u.y,u.z+ep)).w-rndC(vec3(u.x,u.y,u.z-ep)).w
+    ));
 
+}
+
+const vec3 sundir = vec3(-0.7071,1.0,1.7071);
 
 void main() {
    // outColor = mix(vec4(fragColor,1.),texture(texSampler, fragTexCoord),0.99)*(sin(uboo.time1*5.));
@@ -63,9 +81,10 @@ void main() {
     vec3 p = vpos;
     float hit = 0.;
     float mat = 0.;
+    /*
    for(int i = 0;i<254;i++){
   
- //  p = clamp(p,-0.1,0.1);
+
        if(max(abs(p.x), max(abs(p.y), abs(p.z))) < 0.50001){
         
         p= vpos+dir*t;
@@ -74,13 +93,49 @@ void main() {
            if(h.x<0.0001){ hit = 1.; mat = h.y; break;}
           t+=h.x;
        }
-   }
+   }*/
 
+   vec4 col = vec4(0.);
+    for(int i = 0;i<128;i++){
+  
+
+       if(max(abs(p.x), max(abs(p.y), abs(p.z))) < 0.50001){
+        
+        p= vpos+dir*t;
+        vec3 pos = p+0.5;
+            float den = rndC(pos ).w;
+            if(den>0.0){
+
+                float sunDiffuse = clamp((den - rndC(pos+1.*sundir).w)/1., 0.0, 1.0 ); 
+
+            den*=(0.35);   
+		vec3  finalShade = vec3(1.,0.5,0.1)*sunDiffuse+vec3(0.8,0.8,1.0)*0.1; 
+	
+        vec4  c = vec4( mix( vec3(0.8,0.75,0.65), vec3(0.25,0.3,0.85), den*0.01 ), den ); 
+        
+       
+        c.a*=1.;
+   //c.xyz = vec3(1.);
+	c.xyz = c.xyz*0.5+finalShade*0.7;
+		//c.xyz = vec3(1.)*(max(dot(norm(pos),vec3(0.3,1.0,-1.0)),0.0)+den);
+
+
+
+     //   c.w *= 0.4; 
+     c.rgb *= c.a; 
+		col += c*(1.0-col.a); 
+      
+            }
+
+            t+=0.0078;
+            }
+       }
+       col.rgb*=1.+col.a*0.35;
+       //co.rgb = mix(vec3(1.,0.7,0.7),col.rgb,0.7);
+      // col.rgb = pow(col.rgb,vec3())
+    //   col *= vec4(abs(p),1.);
    vec3 ro = localCoord;
-  //  outColor = pow(texture(texSampler,(localCoord/vec3(4.))+0.5),vec4(1./2.2))*vec4(1.,0.7,0.7,1.);
-   // outColor.rgb = vec3(ubo.color.rgb);
-  // float sdi = length(localCoord.zy-vec2(0.0,0.))*2.;
-   //sdi = min(sdi,1.);
+
 
     outColor.rgb = vec3(CamPos);
     outColor.a = 0.;
@@ -100,13 +155,8 @@ void main() {
       outColor.rgb = pow(outColor.rgb,vec3(1./1.5));
      outColor.a = 1.;
     }
-  //   outColor.rgb=vec3(hit);
-  //  outColor.rgb = vec3(texture(texSampler, vec3(localCoord.xy-0.5,1.)).r);
-   
-  // outColor = vec4()
+    outColor.rgb = col.rgb;
+    outColor.a = 1.0;
    outColor.rgb*=outColor.a;
- //   float stp = step(0.0,localCoord.x);
 
- //  outColor.rgb = mix(vec3(1.,0.,0.),vec3(0.,1.,0.),stp);
-   //outColor = vec4(1.,1.,0.,1.);
 }
