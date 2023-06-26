@@ -1,9 +1,11 @@
 #pragma once
-#include "Graphics/VulkanBase.h"
-#include "Object.h"
-#include "quad.h"
-#include "SceneObjects.h"
-#include "Material.h"
+#include "../Graphics/VulkanBase.h"
+#include "../Object.h"
+#include "../quad.h"
+#include "../SceneObjects.h"
+#include "../Material.h"
+#include "ScenePipelines.h"
+#include "../PostProcessing/PostProcessingManager.h"
 class Scene
 {
 	
@@ -20,7 +22,10 @@ public:
 	std::vector<Framebuffer*> framebuffers;
 	VkDescriptorPool descriptorPool;
 	VulkanTexture computeTexture;
+	VkSampler standardSampler;
+	PostProcessingManager* postprocessingManager;
 	VulkanBase* base;
+	ScenePipelines *scenePipelines;
 	glm::mat4 proj[2];
 	glm::mat4 view[2];
 	glm::vec3 camPos;

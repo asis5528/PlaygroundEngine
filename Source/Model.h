@@ -8,7 +8,7 @@
 #include "AnimationData.h"
 #include "Animation.h"
 #include "Object.h"
-#include "Scene.h"
+#include "Scene/Scene.h"
 class Model
 {
 public:

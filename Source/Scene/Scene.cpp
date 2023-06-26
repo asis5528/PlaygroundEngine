@@ -1,7 +1,8 @@
 #include "Scene.h"
 #include <chrono>
 #include <iostream>
-#include "Graphics/VulkanUtils.h"
+#include "../Graphics/VulkanUtils.h"
+
 Scene::Scene(VulkanBase* vbase) {
 	this->base = vbase;
    
@@ -9,35 +10,38 @@ Scene::Scene(VulkanBase* vbase) {
 
 void Scene::init()
 {
+    standardSampler = base->vbuffer->createTextureSampler(1);
     
+   
     Framebuffer* frameBuffer = new Framebuffer(base->vulkandevice, base->swapChain->swapChainExtent.width, base->swapChain->swapChainExtent.height, base->vulkandevice->getMaxUsableSampleCount(), base->swapChain->swapChainImageFormat, utils::findDepthFormat(base->vulkandevice->physicalDevice),2);
     framebuffers.push_back(frameBuffer);
-
+    /*
     Framebuffer* frameBuffer_quad = new Framebuffer(base->vulkandevice, base->swapChain->swapChainExtent.width, base->swapChain->swapChainExtent.height, base->vulkandevice->getMaxUsableSampleCount(), base->swapChain->swapChainImageFormat, utils::findDepthFormat(base->vulkandevice->physicalDevice));
     framebuffers.push_back(frameBuffer_quad);
 
     Quad* quad = new Quad(base,framebuffers[1]);
+    quad->fr2 = &frameBuffer[0];
     quad->createGraphicsPipeline("shaders/quadvert.spv", "shaders/quadfrag.spv");
     VulkanTexture quadtex;
     // quadtex.imageView = base->offscreenbuffer->MultisampledColorImage->imageView;
     quadtex.imageView = framebuffers[0]->MultisampledColorImage->imageView;
-    quadtex.imageSampler = textures[0].imageSampler;
+    quadtex.imageSampler = base->vbuffer->createTextureSampler(1);
     quadtex.imageViewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     quad->textures.push_back(quadtex);
     quad->createdescriptors();
     quads.push_back(quad);
+    */
+    postprocessingManager = new PostProcessingManager(base,framebuffers[0]);
+    scenePipelines = new ScenePipelines(base, framebuffers[0]->renderPass);
 
-
-
-
-
+    /*
     GraphicsPipeline* opipe = new GraphicsPipeline();
     pipelines.push_back(opipe);
     PipelineInput input;
     input.vertexShaderpath = "shaders/vert.spv";
     input.fragmentShaderpath = "shaders/frag.spv";
     input.renderPass = framebuffers[0]->renderPass;
-    input.MultiviewLayer = frameBuffer[0].multiLayerView;
+ //   input.MultiviewLayer = frameBuffer[0].multiLayerView;
     input.device = base->device;
     input.msaaSamples = base->msaaSamples;
     input.viewportExtent = base->swapChain->swapChainExtent;
@@ -91,6 +95,8 @@ void Scene::init()
     pipelines[4]->bufferSize = { sizeof(UniformBufferObject),sizeof(BasicUbo) };
     pipelines[4]->setupPipeline(input);
     pipelines[4]->createGraphicsPipeline();
+    */
+    pipelines = scenePipelines->pipelines;
 }
 
 void Scene::renderPass() {
@@ -144,10 +150,13 @@ void Scene::renderPass() {
 
         vkCmdEndRenderPass(base->commandBuffers[i]);
 
+        /*
         framebuffers[1]->beginRenderPass(base->commandBuffers[i]);
         quads[0]->draw(base->commandBuffers[i]);
-
         vkCmdEndRenderPass(base->commandBuffers[i]);
+        */
+        postprocessingManager->renderPass(base->commandBuffers[i]);
+
 
         base->swapChain->beginRenderPass(base->commandBuffers[i], i);
          //quads[0]->draw(base->commandBuffers[i]);
@@ -400,32 +409,52 @@ void Scene::clean() {
         vkDestroyBuffer(base->device, mesh.vertexBuffer, nullptr);
         vkFreeMemory(base->device, mesh.vertexBufferMemory, nullptr);
     }
-  
+  /*
     for (GraphicsPipeline*& pipeline : pipelines) {
         delete pipeline;
     }
+    */
+    delete scenePipelines;
+    /*
     for (Quad*& quad : quads) {
         delete quad->graphicsPipeline;
         delete quad;
     }
+    */
+    delete postprocessingManager;
     for (Framebuffer*& fb : framebuffers) {
         delete fb;
     }
+
+
     for (Material& mat : materials) {
         if (mat.materialData!=NULL) {
             delete mat.materialData;
         }
         
     }
-
+    vkDestroySampler(base->device, standardSampler, nullptr);
 }
 void Scene::recreate()
 {
+   
+    VkExtent2D ex;
+    ex.width = viewport_resolution.x;
+    ex.height = viewport_resolution.y;
+
+    for (Framebuffer*& framebuffer : framebuffers) {
+
+        framebuffer->clean();
+        framebuffer->width = ex.width;
+        framebuffer->height = ex.height;
+        framebuffer->recreate();
+    }
+    /*
     framebuffers[0]->clean();
     framebuffers[0]->width = viewport_resolution.x;
     framebuffers[0]->height = viewport_resolution.y;
     framebuffers[0]->recreate();
-    framebuffers[0]->colorFormat = VK_FORMAT_B8G8R8A8_SRGB;
+    //framebuffers[0]->colorFormat = VK_FORMAT_B8G8R8A8_SRGB;
 
 
     framebuffers[1]->clean();
@@ -433,23 +462,28 @@ void Scene::recreate()
     framebuffers[1]->height = viewport_resolution.y;
     framebuffers[1]->recreate();
     //framebuffers[1]->colorFormat = VK_FORMAT_B8G8R8A8_SRGB;
-    VkExtent2D ex;
-    ex.width = viewport_resolution.x;
-    ex.height = viewport_resolution.y;
+    */
+
+    scenePipelines->recreate(framebuffers[0]->renderPass, ex);
+    /*
     for (GraphicsPipeline* &pipeline : pipelines) {
         pipeline->clean();
         pipeline->recreatePipeline(ex, framebuffers[0]->renderPass);
     }
-    for (Quad* &quad : quads) {
-        quad->graphicsPipeline->clean();
-        quad->graphicsPipeline->recreatePipeline(ex, framebuffers[1]->renderPass);
-    }
+    */
     //uncomment this when needs actual updating the frame texture
-    quads[0]->textures[0].imageView = framebuffers[0]->MultisampledColorImage->imageView;
-    for (Quad*& quad : quads) {
+   // quads[0]->textures[0].imageView = quads[0]->fr2->MultisampledColorImage->imageView;
+    /*
+    for (Quad* &quad : quads) {
+        quad->textures[0].imageView = quad->fr2->MultisampledColorImage->imageView;
+        quad->graphicsPipeline->clean();
+        quad->recreateGraphicsPipeline(ex);
         quad->cleandescriptors();
         quad->createdescriptors();
     }
+    */
+    postprocessingManager->recreate(ex);
+ 
 
     cleanDescriptors();
     createSceneDescriptor();

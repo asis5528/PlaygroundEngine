@@ -1,0 +1,2 @@
+1)Make separate quad class for postprocessing that includes framebuffers and stuff and maybe inheritance from basic quad class
+2)For destorying errors,maybe texture samplers are not destroyed,work on that

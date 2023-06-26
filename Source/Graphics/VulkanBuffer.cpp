@@ -162,6 +162,39 @@ void VBuffer::createTexture3DfromBuffer(VulkanTexture3D& texture, void* pixels) 
     // createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 }
 
+
+VulkanTexture3D VBuffer::createTexture3DGeneral(int w, int h, int d) {
+    VulkanTexture3D texture;
+    int width = w;
+    int height = h;
+    int depth = d;
+    texture.width = width;
+    texture.height = height;
+    texture.depth = depth;
+    texture.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    texture.imageType = VK_IMAGE_TYPE_3D;
+    texture.imageViewType = VK_IMAGE_VIEW_TYPE_3D;
+
+    const uint32_t memSize = width * height * depth * 4;
+
+    VulkanImage image = VulkanImage(vulkandevice->device, vulkandevice->physicalDevice);
+
+    image.createImage(width, height, depth, VK_IMAGE_TYPE_3D, 1, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    transitionImageLayout(image.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, 1);
+
+    image.createImageView(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, 1, VK_IMAGE_VIEW_TYPE_3D);
+
+    texture.image = image.image;
+    texture.imageView = image.imageView;
+    texture.imageMemory = image.imageMemory;
+    texture.imageSampler = image.createTextureSampler(1);//miplevels as parameter btw
+    return texture;
+
+
+
+}
+
 void VBuffer::transitionImageLayout(VkImage image, VkImageAspectFlags aspectMask, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels) {
     VkCommandBuffer commandBuffer = vulkandevice->beginSingleTimeCommands();
 

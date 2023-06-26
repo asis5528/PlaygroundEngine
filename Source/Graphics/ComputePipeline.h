@@ -1,6 +1,6 @@
 #pragma once
 #include "VulkanBase.h"
-#include "../Scene.h"
+#include "../Scene/Scene.h"
 
 struct ComputeInput {
     std::string computeShaderPath;

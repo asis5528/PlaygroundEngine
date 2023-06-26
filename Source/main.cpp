@@ -45,6 +45,7 @@ const std::string TEXTURE_PATH = "textures/bounds3.png";
 const std::string TEXTURE_PATH2 = "textures/viking_room.png";
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
+
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
@@ -67,7 +68,7 @@ const bool enableValidationLayers = true;
 //uncomment to enable VR
  //#define VR
 #include "Graphics/ComputePipeline.h"
-#include "Scene.h"
+#include "Scene/Scene.h"
 #include "Loader.h"
 #include "GUI/EditorGui.h"
 #include <glm/gtx/matrix_decompose.hpp>
@@ -235,8 +236,8 @@ private:
         vulkanImgui->init();
 
         VulkanTexture guitex;
-        guitex.imageSampler = scene->quads[0]->textures[0].imageSampler;
-        guitex.imageView = scene->framebuffers[1]->MultisampledColorImage->imageView;
+        guitex.imageSampler = scene->standardSampler;
+        guitex.imageView = scene->postprocessingManager->framebuffers[scene->postprocessingManager->bufferSize - 1]->MultisampledColorImage->imageView;
         guitex.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         editorGui->createdescriptor(guitex);
         glfwSetScrollCallback(window, scroll_callback);
@@ -702,9 +703,13 @@ private:
         static auto startTime = std::chrono::high_resolution_clock::now();
 
         auto currentTime = std::chrono::high_resolution_clock::now();
-      //  float iTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-        static float iTime = 0.;
-        iTime += 0.2;
+        static float oldTime = 0.;
+        float iTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        float deltaTime = iTime - oldTime;
+        oldTime = iTime;
+       // static float iTime = 0.;
+       // iTime += 0.2;
+       // std::cout << delta << "\n";
         static int frameid = 0;
     
       //  if (frameid == 0) {
@@ -745,7 +750,7 @@ private:
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || base->swapChain->framebufferResized) {
             base->swapChain->framebufferResized = false;
             recreateSwapChain();
-            editorGui->ds[0] = ImGui_ImplVulkan_AddTexture(scene->quads[0]->textures[0].imageSampler, scene->framebuffers[1]->MultisampledColorImage->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            editorGui->ds[0] = ImGui_ImplVulkan_AddTexture(scene->standardSampler, scene->postprocessingManager->framebuffers[scene->postprocessingManager->bufferSize - 1]->MultisampledColorImage->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
         else if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image!");

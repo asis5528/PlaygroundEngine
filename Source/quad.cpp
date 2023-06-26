@@ -4,6 +4,7 @@ Quad::Quad(VulkanBase* vbase,Framebuffer *fr)
 {
 	this->base = vbase;
     this->fr = fr;
+    
 }
 
 Quad::~Quad() {
@@ -34,6 +35,10 @@ void Quad::createGraphicsPipeline(std::string vshaderpath, std::string fshaderpa
 
     graphicsPipeline->createGraphicsPipeline();
 
+}
+void Quad::recreateGraphicsPipeline(VkExtent2D ex)
+{
+    graphicsPipeline->recreatePipeline(ex, fr->renderPass);
 }
 void Quad::draw(const VkCommandBuffer& commandBuffer)
 {

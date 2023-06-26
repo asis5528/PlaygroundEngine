@@ -131,6 +131,7 @@ void main() {
             }
        }
        col.rgb*=1.+col.a*0.35;
+       
        //co.rgb = mix(vec3(1.,0.7,0.7),col.rgb,0.7);
       // col.rgb = pow(col.rgb,vec3())
     //   col *= vec4(abs(p),1.);

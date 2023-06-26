@@ -14,6 +14,7 @@ struct VBuffer {
 	std::vector<UBO> createUniformBuffers(std::vector<uint64_t> Buffersize);
 //	std::vector 
 	void createTexturefromBuffer(VulkanTexture& texture, void* pixels);
+	VulkanTexture3D createTexture3DGeneral(int w,int h,int d);
 	void createTexture3DfromBuffer(VulkanTexture3D& texture, void* pixels);
 	void transitionImageLayout(VkImage image, VkImageAspectFlags aspectMask, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height,uint32_t depth);

@@ -158,6 +158,7 @@
   <ItemGroup>
     <None Include="..\..\engine\game-engine\imgui.ini" />
     <None Include="shaders\Basic.frag" />
+    <None Include="shaders\GaussianFluidSim.comp" />
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
     <None Include="shaders\sdfCompute _pottery.comp" />
@@ -172,6 +173,7 @@
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="ComputeShaderPipelines.cpp" />
+    <ClCompile Include="ComputeShaderPipelines\GaussianFluidSim.cpp" />
     <ClCompile Include="Graphics\ComputePipeline.cpp" />
     <ClCompile Include="GUI\EditorGui.cpp" />
     <ClCompile Include="Graphics\GraphicsPipeline.cpp" />
@@ -198,14 +200,18 @@
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="PostProcessing\PostProcessingManager.cpp" />
     <ClCompile Include="quad.cpp" />
-    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Scene\ScenePipelines.cpp" />
+    <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="SceneObjects.cpp" />
+    <ClCompile Include="PostProcessing\VolumeRendering.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationData.h" />
     <ClInclude Include="ComputeShaderPipelines.h" />
+    <ClInclude Include="ComputeShaderPipelines\GaussianFluidSim.h" />
     <ClInclude Include="Graphics\ComputePipeline.h" />
     <ClInclude Include="GUI\EditorGui.h" />
     <ClInclude Include="Graphics\GraphicsPipeline.h" />
@@ -233,10 +239,16 @@
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="PostProcessing\PostProcessingManager.h" />
     <ClInclude Include="quad.h" />
-    <ClInclude Include="Scene.h" />
+    <ClInclude Include="Scene\ScenePipelines.h" />
+    <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="SceneObjects.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="PostProcessing\VolumeRendering.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="REMAINDER.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

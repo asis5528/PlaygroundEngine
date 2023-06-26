@@ -125,7 +125,7 @@
          vkDeviceWaitIdle(m_base->device);
          m_scene->recreate();
          m_scene->renderPass();
-         ds[0] = ImGui_ImplVulkan_AddTexture(m_scene->quads[0]->textures[0].imageSampler, m_scene->framebuffers[1]->MultisampledColorImage->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+         ds[0] = ImGui_ImplVulkan_AddTexture(m_scene->standardSampler, m_scene->postprocessingManager->framebuffers[m_scene->postprocessingManager->bufferSize-1]->MultisampledColorImage->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
          //  vkDeviceWaitIdle(base->device);
            //cleanCommandBuffers();
          //  scene->framebuffers[0]->clean();

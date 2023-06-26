@@ -15,12 +15,15 @@ ComputeShaderPipelines::ComputeShaderPipelines(VulkanBase* base,Scene *scene) {
     this->base = base;
     this->scene = scene;
 
+    fluidSim = new GaussianFluidSim(base,scene);
+    ct3D = fluidSim->computeTexture;
+    /*
     int size = 128;
-    ct3D = createComputeTexture3D(size, size, size);
-    ct3D2 = createComputeTexture3D(size, size, size);
+    ct3D = base->vbuffer->createTexture3DGeneral(size, size, size);
+    ct3D2 = base->vbuffer->createTexture3DGeneral(size, size, size);
 
-    ex3D = createComputeTexture3D(size, size, size);
-    ex3D2 = createComputeTexture3D(size, size, size);
+    ex3D = base->vbuffer->createTexture3DGeneral(size, size, size);
+    ex3D2 = base->vbuffer->createTexture3DGeneral(size, size, size);
 
     computeUBO = base->vbuffer->createUniformBuffers({ sizeof(computeUbo) });
     ComputeInput input;
@@ -38,11 +41,14 @@ ComputeShaderPipelines::ComputeShaderPipelines(VulkanBase* base,Scene *scene) {
     input.descriptorTypes = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE ,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER ,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER };
     comp2 = new ComputePipeline(base, input);
  //   comp2->setupDescriptors(computeUBO2, { ct3D2,ct3D,ex3D2,ex3D });
- //   comp2->dispatch(ct3D2.width / 8, ct3D2.height / 8, ct3D2.depth / 8);
+ //   comp2->dispatch(ct3D2.width / 8, ct3D2.height / 8, ct3D2.depth / 8);*/
 
 }
 
 void ComputeShaderPipelines::update(float time) {
+    fluidSim->update(time);
+
+    /*
     ImVec2 screen_pos = ImGui::GetMousePos();
     static ImVec2 mousex = screen_pos;
 
@@ -87,6 +93,6 @@ void ComputeShaderPipelines::update(float time) {
     using std::chrono::system_clock;
 
     sleep_for(10ns);
-  //  sleep_until(system_clock::now() + 1000000000ns);
+  //  sleep_until(system_clock::now() + 1000000000ns);*/
 
 }

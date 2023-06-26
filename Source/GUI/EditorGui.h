@@ -1,5 +1,5 @@
 #pragma once
-#include "../Scene.h"
+#include "../Scene/Scene.h"
 class EditorGui
 {
 public:
@@ -7,6 +7,7 @@ public:
 	VulkanBase* m_base;
 	int frameID = 0;
 	std::vector<VkDescriptorSet> ds;
+	VkSampler texturesamp;
 	EditorGui(Scene *scene, VulkanBase* base);
 	void createdescriptor(VulkanTexture& tex);
 	void run();
