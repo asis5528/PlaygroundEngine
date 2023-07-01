@@ -187,10 +187,10 @@ void Scene::update(float iTime) {
     // offset =1.5;
     
     ///for non vr////////
-    float angle = sin(iTime/30.)*0.3;
+    float angle = (sin(iTime/3.)*3.1415);
     float an = sin(iTime / 12.) * 0.3;
    // angle = 1.4;
-    glm::vec3 camPos = glm::vec3(glm::sin(angle) * offset, glm::cos(angle) * offset, glm::sin(an)*0.);
+    glm::vec3 camPos = glm::vec3(glm::sin(3.1415) * offset, glm::cos(3.1415) * offset, glm::sin(an)*0.);
    view[0] = glm::lookAt(camPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 #endif
   //  glm::vec3 camPos;
@@ -276,11 +276,18 @@ void Scene::update(float iTime) {
             }
             else {
                 //for (int meshID = 0; meshID < object.meshID.size(); meshID++) {
-            
-                    ubo.model = object.finalMatrix;
+                   
+                    ubo.model = object.ModelMatrix;
 
                     for (int i = 0; i < object.meshID.size(); i++) {
                         Mesh* mesh = &meshes[object.meshID[i]];
+                        if (mesh->vertices.size() > 100.) {
+                            ubo.model = glm::translate(ubo.model, glm::vec3(1., -0.3, 0.));
+                        }
+                        else {
+                            ubo.model = glm::rotate(ubo.model, angle, glm::vec3(0., 1., 0.));
+
+                        }
                         object.shader[i].ubos[0].map(base->device, sizeof(ubo), &ubo);
                         if (mesh->texID >= 0) {
                             object.shader[i].ubos[1].map(base->device, sizeof(u), &u);

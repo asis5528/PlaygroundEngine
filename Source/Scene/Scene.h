@@ -6,6 +6,8 @@
 #include "../Material.h"
 #include "ScenePipelines.h"
 #include "../PostProcessing/PostProcessingManager.h"
+
+
 class Scene
 {
 	
@@ -16,6 +18,7 @@ public:
 	std::vector<Mesh> meshes;
 	std::vector<Animation> animations;
 	std::vector<Object> objects;
+	int selectedID;
 	std::vector<Quad*> quads;
 	glm::vec2 viewport_resolution;
 	Node rootNode;
@@ -30,7 +33,7 @@ public:
 	glm::mat4 view[2];
 	glm::vec3 camPos;
 	float offset = 2.;
-
+	bool dispatch = false;
 
 	Scene(VulkanBase *vbase);
 	void init();

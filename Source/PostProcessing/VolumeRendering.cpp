@@ -9,12 +9,21 @@ VolumeRendering::VolumeRendering(VulkanBase* base, Framebuffer* previousFB)
     Framebuffer* frameBuffer_quad = new Framebuffer(base->vulkandevice, base->swapChain->swapChainExtent.width, base->swapChain->swapChainExtent.height, base->vulkandevice->getMaxUsableSampleCount(), base->swapChain->swapChainImageFormat, utils::findDepthFormat(base->vulkandevice->physicalDevice));
     framebuffers.push_back(frameBuffer_quad);
     Quad* quad = new Quad(base, framebuffers[0]);
-    quad->createGraphicsPipeline("shaders/quadvert.spv", "shaders/quadfrag.spv");
+    std::vector<descriptorTypes> VolumeDescriptorTypes = { descriptorTypes{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT },
+    descriptorTypes{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT } };
+    
+    quad->createGraphicsPipeline("shaders/PostProcessing/VolumePassVS.spv", "shaders/PostProcessing/VolumePassFS.spv",VolumeDescriptorTypes);
     VulkanTexture quadtex;
     quadtex.imageView = previousFB->MultisampledColorImage->imageView;
     quadtex.imageSampler = base->vbuffer->createTextureSampler(1);
     quadtex.imageViewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     quad->textures.push_back(quadtex);
+    VulkanTexture quadtex2;
+    quadtex2.imageView = previousFB->MultisampledDepthImage->imageView;
+    quadtex2.imageSampler = base->vbuffer->createTextureSampler(1);
+    quadtex2.imageViewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    quad->textures.push_back(quadtex2);
+
     quad->createdescriptors();
     quads.push_back(quad);
 
@@ -39,6 +48,11 @@ void VolumeRendering::recreate(VkExtent2D ex)
     }
     for (Quad*& quad : quads) {
         quad->textures[0].imageView = previousFB->MultisampledColorImage->imageView;
+        if (quad->textures.size() > 1) {
+           
+            quad->textures[1].imageView = previousFB->MultisampledDepthImage->imageView;
+
+        }
         quad->graphicsPipeline->clean();
         quad->recreateGraphicsPipeline(ex);
         quad->cleandescriptors();

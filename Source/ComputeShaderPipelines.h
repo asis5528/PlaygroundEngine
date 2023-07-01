@@ -3,6 +3,7 @@
 #include "Scene/Scene.h"
 #include "Graphics/ComputePipeline.h"
 #include "ComputeShaderPipelines/GaussianFluidSim.h"
+#include "ComputeShaderPipelines/MeshToSdf.h"
 class ComputeShaderPipelines
 {
 
@@ -22,7 +23,7 @@ public:
     int Frame = 0;
 
     GaussianFluidSim *fluidSim;
-
+    MeshToSdf *meshtosdf;
     ComputeShaderPipelines(VulkanBase* base, Scene* scene);
     void update(float time);
 

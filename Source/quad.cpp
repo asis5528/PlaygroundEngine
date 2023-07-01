@@ -12,7 +12,7 @@ Quad::~Quad() {
     //delete graphicsPipeline;
 }
 
-void Quad::createGraphicsPipeline(std::string vshaderpath, std::string fshaderpath)
+void Quad::createGraphicsPipeline(std::string vshaderpath, std::string fshaderpath, std::vector<descriptorTypes> descriptorTypes)
 {
     graphicsPipeline = new GraphicsPipeline();
     PipelineInput input;
@@ -22,7 +22,7 @@ void Quad::createGraphicsPipeline(std::string vshaderpath, std::string fshaderpa
     input.renderPass = this->fr->renderPass;
     input.msaaSamples = base->msaaSamples;
     input.viewportExtent = base->swapChain->swapChainExtent;
-    input.descriptorTypes = { descriptorTypes{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_FRAGMENT_BIT} };
+    input.descriptorTypes = descriptorTypes;
     graphicsPipeline->setupPipeline(input);
     VkPipelineVertexInputStateCreateInfo vi{};
     vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -53,11 +53,12 @@ void Quad::createdescriptors()
     for (int i = 0; i < graphicsPipeline->pipelineInput.descriptorTypes.size(); i++) {
         types.push_back(graphicsPipeline->pipelineInput.descriptorTypes[i].descriptorType);
    }
-    base->vulkandescriptor->createDescriptorPool(1,
+    base->vulkandescriptor->createDescriptorPool(types.size(),
         types,
-       2, &descriptorPool);
+        types.size()+1, &descriptorPool);
 
     std::vector<VkDescriptorSetLayout> Qlayouts(1, graphicsPipeline->descriptorSetLayout);
+
     descriptorSet = base->vulkandescriptor->createDescriptorSets(1, Qlayouts, descriptorPool)[0];
 
 

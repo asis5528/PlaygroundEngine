@@ -34,19 +34,26 @@
 
          ImGui::PushStyleColor(ImGuiCol_FrameBg, c);
          if (node.children[i].children.size()) {
+            
              if (ImGui::TreeNode(m_scene->objects[node.children[i].ObjectID].name.c_str())) {
 
                  ImGui::TreePop();
                  ImGui::Indent();
-
+                 
                  tree(node.children[i]);
                  ImGui::Unindent();
 
              }
          }
          else {
+             //static bool k = 0;
              ImGui::Indent();
-             ImGui::Selectable(m_scene->objects[node.children[i].ObjectID].name.c_str(), false);
+           
+             ImGui::Selectable(m_scene->objects[node.children[i].ObjectID].name.c_str(), node.children[i].ObjectID== m_scene->selectedID);
+             if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0))
+             {
+                 m_scene->selectedID = node.children[i].ObjectID;
+             }
              ImGui::Unindent();
          }
 
@@ -97,8 +104,8 @@
 
          ImGui::DockBuilderDockWindow("tools", dock_id_down);
          ImGui::DockBuilderDockWindow("scene", dock_id_left);
-         ImGui::DockBuilderDockWindow("scene2", dock_id_right);
-         ImGui::DockBuilderDockWindow("scene3", dock_id_right2);
+         ImGui::DockBuilderDockWindow("scene3", dock_id_right);
+         ImGui::DockBuilderDockWindow("inspector", dock_id_right2);
          ImGui::DockBuilderDockWindow("Demo window", dock_id_up);
          ImGui::DockBuilderDockWindow("Viewport", dock_id_center->ID);
          ImGui::DockBuilderFinish(dockspace_id);
@@ -152,22 +159,18 @@
 
      ImGui::Begin("tools");
      ImGui::End();
-
+     
      ImGui::Begin("scene");
      tree(m_scene->rootNode);
 
-
-
-     //  if (ImGui::TreeNode("node")) {
-       //    if (ImGui::TreeNode("node1")) {
-         //      ImGui::TreePop();
-        //   }
-       //    ImGui::TreePop();
-     //  }
-
      ImGui::End();
 
-     ImGui::Begin("scene2");
+     ImGui::Begin("inspector");
+    if( ImGui::Button("MeshToSDF Dispatch")) {
+         m_scene->dispatch = true;
+     }
+   //  m_scene->objects[m_scene->selectedID].
+     //ImGui::DragFloat3("position", &scene.objects[scene.selectionIndex].position[0], 0.1, 0.0, 0.0, "%3f");
      ImGui::End();
      ImGui::Begin("scene3");
      ImGui::End();

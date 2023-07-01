@@ -10,6 +10,9 @@ public:
 	std::vector<VulkanShader> shader;
 	std::vector<uint32_t> meshID;
 	uint32_t textureID;
+	glm::vec3 position;
+	glm::vec3 scale;
+	glm::vec3 rotation;
 	glm::mat4 ModelMatrix;
 	glm::mat4 finalMatrix;
 	bool hasMesh;
@@ -17,6 +20,7 @@ public:
 	//std::vector<Animation> animations;
 	unsigned int animationID;
 	bool hasAnimation;
+	bool selected = 0;
 	std::vector<Object> child;
 	void update();
 };

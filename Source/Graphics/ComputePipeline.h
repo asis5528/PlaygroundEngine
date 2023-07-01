@@ -7,6 +7,8 @@ struct ComputeInput {
     std::vector<VkDescriptorType> descriptorTypes;
 
 };
+
+
 class ComputePipeline
 {
 
@@ -25,7 +27,7 @@ public:
     ComputeInput m_input;
      ComputePipeline( VulkanBase* base, ComputeInput input);
      ~ComputePipeline();
-     void setupDescriptors(std::vector <UBO> ubos, std::vector<VulkanTexture> textures);
+     void setupDescriptors(std::vector <UBO> ubos, std::vector<VulkanTexture> textures,std::vector<SBO> sbos);
      void dispatch(uint32_t group_x, uint32_t group_y, uint32_t group_z);
      void submit();
 };

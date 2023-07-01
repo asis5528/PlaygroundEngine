@@ -15,7 +15,7 @@ public:
 	//Quad(VulkanBase *vbase);
 	Quad(VulkanBase* vbase, Framebuffer *fr);
 	~Quad();
-	void createGraphicsPipeline(std::string vshaderpath, std::string fshaderpath);
+	void createGraphicsPipeline(std::string vshaderpath, std::string fshaderpath, std::vector<descriptorTypes> descriptorTypes);
 	void recreateGraphicsPipeline(VkExtent2D ex);
 	void createdescriptors();
 	void cleandescriptors();

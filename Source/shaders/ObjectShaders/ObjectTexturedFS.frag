@@ -34,7 +34,7 @@ void main() {
 
     outColor.rgb*=outColor.a;
      float k = texture(texSampler, fragTexCoord).w;
-    
+    outColor = texture(texSampler, fragTexCoord);
    // outColor = mix(vec4(0.2,0.1,3.,1.),vec4(1.,0.5,0.1,1.),1.-k)*pow(k,0.6)*3.;
  //   outColor = vec4(k);
   //  outColor+=vec4(0.2);

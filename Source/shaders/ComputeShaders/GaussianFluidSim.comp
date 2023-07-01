@@ -7,9 +7,11 @@ layout(binding = 2) uniform fluidUBO {
     float time;
     int Frame;
 } ubo;
+layout(binding = 3) uniform sampler3D oldFluid;
+layout(binding = 4) uniform sampler3D sdf;
+//#define A(i) imageLoad(resultImage,ivec3(max(i+u,0.)))
 
-
-#define A(i) imageLoad(resultImage,ivec3(max(i+u,0.)))
+#define A(i) texelFetch(oldFluid,ivec3(max(i+u,0.)),0)
 void main()
 {
 vec3 u = vec3(gl_GlobalInvocationID);
@@ -21,7 +23,7 @@ vec4 r = vec4(1.0);
     vec4 neigh = A(i);
         float m = neigh.w;
         vec3 v = neigh.xyz;                          // neighbour velocity
-       v.y-=0.05;
+      
        vec3 fv = v+i;
        r += m * exp(-(fv.x*fv.x+fv.y*fv.y+fv.z*fv.z)) /( 5.56833) * vec4(v,1.0);
                
@@ -33,7 +35,7 @@ vec4 r = vec4(1.0);
     }
 
     r.xyz /= r.w + 1e-6;
-
+     r.y-=0.05;
      
        vec3 uv = u/iResolution.xyz;
        //float fr = imageLoad(resultImage,ivec2(4.,300.)).w;
@@ -44,12 +46,17 @@ vec4 r = vec4(1.0);
   
         vec3 m = 4.*u/iResolution.xyz-2.;
         
-       if(mod(ubo.time,20.)<10.){
+       if(mod(ubo.time,20.)<15.){
             vec3 n = m;
           //  n.x = mod(n.x*5.,4.)-2.0;
-         r += vec4(0.,0.,0.,1.0) * smoothstep(0.1,0.09,length(n+vec3(sin(ubo.time*0.3)*0.9,-1.7,0.)));
-       
+         r += vec4(0.,0.,0.,1.0) * smoothstep(0.1,0.09,length(n+vec3(sin(ubo.time*0.8)*0.9,-1.7,0.)));
+       float rn = texelFetch(sdf,ivec3(u),0).r;
+       if(rn.r>0.00){
+       r.xyz*=0.;
+        r +=vec4(0.,0.,0.,0.005);
        }
+       }
+       
          if(u.y<10){
          
          if(r.y<0.0){
@@ -76,7 +83,7 @@ vec4 r = vec4(1.0);
         r.xyz*=vec3(1.,1.,-1.);
     }
     if(length(m+vec3(-1.3,0.1,0.))<0.3){
-     if(mod(ubo.time,130.)<50.){
+     if(mod(ubo.time,50.)<30.){
          r.xyz*=vec3(-1.);
     }
     }
@@ -86,8 +93,12 @@ vec4 r = vec4(1.0);
        float bounds = texture(tex,vec2(1.-p.x,min(1.-p.y-0.2,1.0))).x;
 
     if(bounds>0.0001){
-        if(mod(ubo.time,130.)<50.){
+        if(mod(ubo.time,50.)<30.){
+        if(mod(ubo.time,50.)<1.){
+      //  r.w = 1.;
+        }
             r.xyz*=vec3(-1.);
+       //     r.w = -1.;
         }
        // r.w*=1.+bounds*0.1;
     }

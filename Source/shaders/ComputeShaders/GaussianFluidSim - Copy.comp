@@ -1,0 +1,30 @@
+#version 450
+struct Vertex {
+    vec3 pos;
+    vec3 normal;
+    vec2 texCoord;
+    };
+layout (local_size_x = 8, local_size_y = 8,local_size_z = 8) in;
+layout (binding = 0, rgba32f) uniform coherent image3D resultImage;
+layout(binding = 1) readonly buffer VertexIn {
+   Vertex verticesIn[ ];
+};
+
+//#define A(i) imageLoad(resultImage,ivec3(max(i+u,0.)))
+
+#define A(i) texelFetch(oldFluid,ivec3(max(i+u,0.)),0)
+void main()
+{
+vec3 u = vec3(gl_GlobalInvocationID);
+vec3 iResolution =vec3(imageSize(resultImage));
+vec3 pos = (u/iResolution)*10.0 - 5.0;
+float d = 0.;
+for(int i =0;i<9115;i++){
+Vertex v= verticesIn[i];
+vec3 p = v.pos;
+d = min(length(pos-p*0.1)-0.3,d);
+}
+vec4  r = vec4(1.,1.,1.,-d);
+      
+    imageStore(resultImage, ivec3(gl_GlobalInvocationID), r);
+}

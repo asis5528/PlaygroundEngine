@@ -18,7 +18,7 @@ void VBuffer::createVertexBuffer(Mesh& mesh) {
     memcpy(data, mesh.vertices.data(), (size_t)bufferSize);
     vkUnmapMemory(vulkandevice->device, stagingBufferMemory);
 
-    vulkandevice->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.vertexBuffer, mesh.vertexBufferMemory);
+    vulkandevice->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.vertexBuffer, mesh.vertexBufferMemory);
 
     vulkandevice->copyBuffer(stagingBuffer, mesh.vertexBuffer, bufferSize);
 
@@ -43,7 +43,7 @@ void VBuffer::createSkinnedVertexBuffer(Mesh& mesh) {
     memcpy(data, mesh.skinnedvertices.data(), (size_t)bufferSize);
     vkUnmapMemory(vulkandevice->device, stagingBufferMemory);
 
-    vulkandevice->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.vertexBuffer, mesh.vertexBufferMemory);
+    vulkandevice->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.vertexBuffer, mesh.vertexBufferMemory);
 
     vulkandevice->copyBuffer(stagingBuffer, mesh.vertexBuffer, bufferSize);
 
@@ -64,7 +64,7 @@ void VBuffer::createIndexBuffer(Mesh& mesh) {
     memcpy(data, mesh.indices.data(), (size_t)bufferSize);
     vkUnmapMemory(vulkandevice->device, stagingBufferMemory);
 
-    vulkandevice->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.indexBuffer, mesh.indexBufferMemory);
+    vulkandevice->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.indexBuffer, mesh.indexBufferMemory);
 
     vulkandevice->copyBuffer(stagingBuffer, mesh.indexBuffer, bufferSize);
 

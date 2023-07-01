@@ -14,6 +14,13 @@ struct UBO {
 		}
 
 };
+
+struct SBO {
+	VkBuffer buffer;
+	VkDeviceMemory bufferMemory;
+	uint64_t size;
+
+};
 struct VulkanShader {
 	GraphicsPipeline *graphicsPipeline;
 	VkDescriptorPool descriptorPool;

@@ -15,8 +15,11 @@ ComputeShaderPipelines::ComputeShaderPipelines(VulkanBase* base,Scene *scene) {
     this->base = base;
     this->scene = scene;
 
-    fluidSim = new GaussianFluidSim(base,scene);
+    meshtosdf = new MeshToSdf(base, scene);
+    fluidSim = new GaussianFluidSim(base,scene, meshtosdf->computeTexture);
+ 
     ct3D = fluidSim->computeTexture;
+    scene->textures.push_back(ct3D);
     /*
     int size = 128;
     ct3D = base->vbuffer->createTexture3DGeneral(size, size, size);
@@ -46,8 +49,9 @@ ComputeShaderPipelines::ComputeShaderPipelines(VulkanBase* base,Scene *scene) {
 }
 
 void ComputeShaderPipelines::update(float time) {
+    meshtosdf->update(time);
     fluidSim->update(time);
-
+    
     /*
     ImVec2 screen_pos = ImGui::GetMousePos();
     static ImVec2 mousex = screen_pos;

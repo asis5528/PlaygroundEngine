@@ -56,6 +56,7 @@ public:
     VkPipeline graphicsPipeline;
     PipelineInfoLocal infoLocal;
     std::vector<uint64_t> bufferSize;
+    bool frontFaceCull = 0;
    // void k(PipelineInput* pipelineInput);
     ~GraphicsPipeline();
     void clean();

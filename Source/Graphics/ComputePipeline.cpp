@@ -117,7 +117,7 @@ ComputePipeline::ComputePipeline(VulkanBase *base, ComputeInput input)
 ComputePipeline::~ComputePipeline() {
 
 }
-void ComputePipeline::setupDescriptors(std::vector <UBO> ubos, std::vector<VulkanTexture> textures)
+void ComputePipeline::setupDescriptors(std::vector <UBO> ubos, std::vector<VulkanTexture> textures, std::vector<SBO> sbos)
 {
 
 
@@ -140,7 +140,7 @@ void ComputePipeline::setupDescriptors(std::vector <UBO> ubos, std::vector<Vulka
     std::vector<VkWriteDescriptorSet> computeWriteDescriptorSets;
    // std::vector<VkWriteDescriptorSet> computeWriteDescriptorSets;
 
-    computeWriteDescriptorSets.resize(textures.size()+ubos.size());
+    computeWriteDescriptorSets.resize(textures.size()+ubos.size()+sbos.size());
 
     std::vector<VkDescriptorImageInfo> imageInfo{};
     imageInfo.resize(textures.size());
@@ -150,6 +150,10 @@ void ComputePipeline::setupDescriptors(std::vector <UBO> ubos, std::vector<Vulka
     bufferInfo.resize(ubos.size());
     int uboIndex = 0;
 
+    std::vector<VkDescriptorBufferInfo> sbobufferInfo{};
+    sbobufferInfo.resize(sbos.size());
+    int sboIndex = 0;
+
     for (int i = 0; i < m_input.descriptorTypes.size(); i++) {
         if (m_input.descriptorTypes[i] == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
             bufferInfo[uboIndex].buffer = ubos[uboIndex].buffer;
@@ -157,6 +161,13 @@ void ComputePipeline::setupDescriptors(std::vector <UBO> ubos, std::vector<Vulka
             bufferInfo[uboIndex].range = ubos[uboIndex].size;
             computeWriteDescriptorSets[i].pBufferInfo = &bufferInfo[uboIndex];
             uboIndex++;
+        }
+        else if (m_input.descriptorTypes[i] == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER) {
+            sbobufferInfo[sboIndex].buffer = sbos[sboIndex].buffer;
+            sbobufferInfo[sboIndex].offset = 0;
+            sbobufferInfo[sboIndex].range = sbos[sboIndex].size;
+            computeWriteDescriptorSets[i].pBufferInfo = &sbobufferInfo[sboIndex];
+            sboIndex++;
         }
         else {
             imageInfo[textureIndex].imageLayout = textures[textureIndex].imageLayout;

@@ -198,7 +198,7 @@ private:
      //   scene->computeTexture = ct;
         
 
-        scene->textures.push_back(clines->ct3D);
+        //scene->textures.push_back(clines->ct3D);
         scene->objects[0].shader[0].graphicsPipeline = scene->pipelines[4];
         //scene->objects[0].ModelMatrix = glm::translate(scene->objects[0].ModelMatrix, glm::vec3(0., 1., 0.));
         Material material;

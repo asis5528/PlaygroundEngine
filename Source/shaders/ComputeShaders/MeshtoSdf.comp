@@ -1,0 +1,81 @@
+#version 450
+struct Vertex {
+    vec3 pos;
+    vec3 normal;
+    vec3 texCoord;
+    };
+layout (local_size_x = 8, local_size_y = 8,local_size_z = 8) in;
+layout (binding = 0, rgba32f) uniform coherent image3D resultImage;
+layout(std430,binding = 1)  buffer Vertices {
+   Vertex vertices[ ];
+};
+layout(std430, binding = 2) buffer Indices
+{
+    uint indices[];
+};
+
+//#define A(i) imageLoad(resultImage,ivec3(max(i+u,0.)))
+
+#define A(i) texelFetch(oldFluid,ivec3(max(i+u,0.)),0)
+
+float dot2(in vec2 v) { return dot(v, v); }
+
+// ------------------------------------------------------------------
+
+float dot2(in vec3 v) { return dot(v, v); }
+
+// ------------------------------------------------------------------
+
+float ndot(in vec2 a, in vec2 b) { return a.x * b.x - a.y * b.y; }
+float sdf_triangle(vec3 p, vec3 a, vec3 b, vec3 c)
+{
+    vec3 ba  = b - a;
+    vec3 pa  = p - a;
+    vec3 cb  = c - b;
+    vec3 pb  = p - b;
+    vec3 ac  = a - c;
+    vec3 pc  = p - c;
+    vec3 nor = cross(ba, ac);
+
+    return sqrt(
+        (sign(dot(cross(ba, nor), pa)) + sign(dot(cross(cb, nor), pb)) + sign(dot(cross(ac, nor), pc)) < 2.0) ?
+            min(min(
+                    dot2(ba * clamp(dot(ba, pa) / dot2(ba), 0.0, 1.0) - pa),
+                    dot2(cb * clamp(dot(cb, pb) / dot2(cb), 0.0, 1.0) - pb)),
+                dot2(ac * clamp(dot(ac, pc) / dot2(ac), 0.0, 1.0) - pc)) :
+            dot(nor, pa) * dot(nor, pa) / dot2(nor));
+}
+
+void main()
+{
+vec3 u = vec3(gl_GlobalInvocationID);
+vec3 iResolution =vec3(imageSize(resultImage));
+vec3 pos = (u/iResolution)*1.0 - 0.5;
+pos.y+=0.2;
+float d = 100000000000000000000.;
+const int tris = 31104/3;
+
+for(int i =0;i<tris;i++){
+Vertex v= vertices[indices[i]];
+
+  Vertex v0 = vertices[indices[3 * i]];
+            Vertex v1 = vertices[indices[3 * i + 1]];
+            Vertex v2 = vertices[indices[3 * i + 2]];
+
+
+//vec3 p = v.pos+vec3(0.,-0.5,0.);
+
+    float h = sdf_triangle(pos,v0.pos,v1.pos,v2.pos);
+  //  float  h = min(min(length(pos-v0.pos),length(pos-v1.pos)),length(pos-v2.pos));
+    d = min(h,d);
+    
+  
+
+}
+//d = length(pos)-0.2;
+float hit = 0.0;
+
+vec4  r = vec4(-(d-0.02),0.,0.,-(d-0.01)*1.);
+      
+    imageStore(resultImage, ivec3(gl_GlobalInvocationID), r);
+}

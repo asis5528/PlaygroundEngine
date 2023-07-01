@@ -69,6 +69,18 @@ void VulkanDescriptor::updateDescriptorSets(VkDescriptorSet descriptorSet, std::
 		descriptorWrites[index].pBufferInfo = &bufferInfos[i];
 		index++;
 	}
+
+	std::vector< VkDescriptorImageInfo> imageInfos;
+	for (int i = 0; i < textures.size(); i++) {
+
+
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = textures[i].imageLayout;
+		imageInfo.imageView = textures[i].imageView;
+		imageInfo.sampler = textures[i].imageSampler;
+		imageInfos.push_back(imageInfo);
+
+	}
 	for (int i = 0; i < textures.size(); i++) {
 
 		
@@ -82,7 +94,7 @@ void VulkanDescriptor::updateDescriptorSets(VkDescriptorSet descriptorSet, std::
 		descriptorWrites[index].dstArrayElement = 0;
 		descriptorWrites[index].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descriptorWrites[index].descriptorCount = 1;
-		descriptorWrites[index].pImageInfo = &imageInfo;
+		descriptorWrites[index].pImageInfo = &imageInfos[i];
 		index++;
 	}
 
