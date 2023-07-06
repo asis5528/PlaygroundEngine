@@ -68,7 +68,9 @@ void VulkanBase::init(GLFWwindow* window) {
 void VulkanBase::recreate() {
   //  swapChain->create();
     swapChain->create();
+    
     createCommandBuffers();
+  //  vkResetCommandPool(vulkandevice->device, vulkandevice->commandPool, 0);
    // offscreenbuffer->width = swapChain->swapChainExtent.width;
   //  offscreenbuffer->height = swapChain->swapChainExtent.height;
   //  offscreenbuffer->recreate();
@@ -352,7 +354,10 @@ VulkanBase::~VulkanBase()
     delete swapChain;
 
 
-
+    for (int i = 0; i < commandBuffers.size(); i++) {
+        vkFreeCommandBuffers(device, vulkandevice->commandPool, 1, &commandBuffers[i]);
+   }
+    
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);

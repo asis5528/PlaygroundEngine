@@ -122,7 +122,7 @@ Model::Model(const char* path, const Scene *enscene):engineScene(enscene){
                         aiString texture_file;
                         mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texture_file);
                         std::pair<const aiTexture*, int> texData = scene->GetEmbeddedTextureAndIndex(texture_file.C_Str());
-                        matData->DiffuseTexture = (engineScene->textures.size()) + texData.second;
+                        matData->DiffuseTexture = (engineScene->ptextures.size()) + texData.second;
                         material.materialData = matData;
                     
                     }
@@ -143,7 +143,7 @@ Model::Model(const char* path, const Scene *enscene):engineScene(enscene){
                         aiString texture_file;
                         mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texture_file);
                         std::pair<const aiTexture*, int> texData = scene->GetEmbeddedTextureAndIndex(texture_file.C_Str());
-                        matData->DiffuseTexture = (engineScene->textures.size()) + texData.second;
+                        matData->DiffuseTexture = (engineScene->ptextures.size()) + texData.second;
                         material.materialData = matData;
 
                     }
@@ -164,7 +164,7 @@ Model::Model(const char* path, const Scene *enscene):engineScene(enscene){
                         aiString texture_file;
                         mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texture_file);
                         std::pair<const aiTexture*, int> texData = scene->GetEmbeddedTextureAndIndex(texture_file.C_Str());
-                        matData->DiffuseTexture = (engineScene->textures.size()) + texData.second;
+                        matData->DiffuseTexture = (engineScene->ptextures.size()) + texData.second;
                         material.materialData = matData;
 
                     }

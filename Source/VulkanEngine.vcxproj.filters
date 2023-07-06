@@ -135,6 +135,9 @@
     <ClCompile Include="ComputeShaderPipelines\MeshToSdf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Imgui\imconfig.h">
@@ -194,6 +197,8 @@
     <ClInclude Include="PostProcessing\VolumeRendering.h" />
     <ClInclude Include="PostProcessing\PostProcessingManager.h" />
     <ClInclude Include="ComputeShaderPipelines\MeshToSdf.h" />
+    <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="PGEResourceTypes.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="REMAINDER.txt" />

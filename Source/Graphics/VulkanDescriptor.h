@@ -5,7 +5,7 @@
 #include "Mesh.h"
 #include "../Shader.h"
 #include "GraphicsPipeline.h"
-
+#include "VulkanImage.h"
 
 
 struct VulkanDescriptor

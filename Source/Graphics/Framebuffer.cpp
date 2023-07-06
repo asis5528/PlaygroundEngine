@@ -22,6 +22,7 @@ void Framebuffer::clean() {
     ColorImage->destroy();
     DepthImage->destroy();
     MultisampledColorImage->destroy();
+    MultisampledDepthImage->destroy();
     vkDestroyFramebuffer(vulkandevice->device, framebuffer, nullptr);
     vkDestroyRenderPass(vulkandevice->device, renderPass, nullptr);
 }

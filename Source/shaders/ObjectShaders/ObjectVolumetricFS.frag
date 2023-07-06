@@ -19,6 +19,7 @@ vec4 rndC(vec3 u) {
     U = floor(U) + F*F*(3.-2.*F); 
  // U = floor(U) + F*F*F*(F*(F*6.-15.)+10.);   // use if you want smooth gradients
     return texture( texSampler, u );
+    // return texelFetch( texSampler, ivec3(u*R),0 );
 }
 vec2 map (vec3 p){
 float k = 1./64.;

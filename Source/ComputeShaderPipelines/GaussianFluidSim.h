@@ -8,16 +8,17 @@ class GaussianFluidSim
 public:
     VulkanBase* base;
     Scene* scene;
-    VulkanTexture3D computeTexture;
+    PGEResourceTypes::Texture3D computeTexture;
     std::vector<UBO> computeUBO;
     ComputePipeline* comp;
 
-    VulkanTexture3D computeTexture2;
+    PGEResourceTypes::Texture3D computeTexture2;
     std::vector<UBO> computeUBO2;
     ComputePipeline* comp2;
 
     int Frame = 0;
-    GaussianFluidSim(VulkanBase* base, Scene* scene, VulkanTexture3D sdftex);
+    GaussianFluidSim(VulkanBase* base, Scene* scene, PGEResourceTypes::Texture3D sdftex);
+    ~GaussianFluidSim();
     void update(float time);
 };
 

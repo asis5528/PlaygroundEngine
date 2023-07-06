@@ -2,6 +2,7 @@
 #include <chrono>
 #include <iostream>
 #include "../Graphics/VulkanUtils.h"
+#include "../ResourceManager.h"
 
 Scene::Scene(VulkanBase* vbase) {
 	this->base = vbase;
@@ -376,7 +377,7 @@ void Scene::createSceneDescriptor()
                if (mat.type == TexturedMaterial) {
                    MaterialTexturedData *dat = (struct MaterialTexturedData*)mat.materialData;
                   // MaterialTexturedData k = *dat;
-                   descriptorsTextures.push_back(textures[dat->DiffuseTexture]);
+                   descriptorsTextures.push_back(ResourceManager::getTexture(ptextures[dat->DiffuseTexture].id));
                }
                base->vulkandescriptor->updateDescriptorSets(object->shader[meshID].descriptorSet, { object->shader[meshID].ubos }, descriptorsTextures);
            }
@@ -402,14 +403,17 @@ void Scene::cleanUniforms()
 }
 void Scene::clean() {
     cleanUniforms();
-    for (VulkanTexture& texture : textures) {
-        vkDestroyImageView(base->device, texture.imageView, nullptr);
-        vkDestroyImage(base->device, texture.image, nullptr);
-        vkFreeMemory(base->device, texture.imageMemory, nullptr);
-        vkDestroySampler(base->device, texture.imageSampler, nullptr);
-    }
+    
+  //  for (VulkanTexture& texture : textures) {
+       // texture.destroy(base->device);
+        //vkDestroyImageView(base->device, texture.imageView, nullptr);
+      //  vkDestroyImage(base->device, texture.image, nullptr);
+       // vkFreeMemory(base->device, texture.imageMemory, nullptr);
+        //vkDestroySampler(base->device, texture.imageSampler, nullptr);
+  //  }
 
     for (Mesh& mesh : meshes) {
+        
         vkDestroyBuffer(base->device, mesh.indexBuffer, nullptr);
         vkFreeMemory(base->device, mesh.indexBufferMemory, nullptr);
 
@@ -440,7 +444,7 @@ void Scene::clean() {
         }
         
     }
-    vkDestroySampler(base->device, standardSampler, nullptr);
+   // vkDestroySampler(base->device, standardSampler, nullptr);
 }
 void Scene::recreate()
 {

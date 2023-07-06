@@ -5,11 +5,12 @@ class MeshToSdf
 {
 public:
 	std::vector<SBO> computeSBOVertices;
-	VulkanTexture3D computeTexture;
+	PGEResourceTypes::Texture3D computeTexture;
 	ComputePipeline* comp;
 	VulkanBase* base;
 	Scene* scene;
 	MeshToSdf(VulkanBase* base, Scene* scene);
+	~MeshToSdf();
 	void update(float time);
 };
 

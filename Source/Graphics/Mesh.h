@@ -90,25 +90,6 @@ struct Mesh {
 };
 
 
-struct VulkanTexture {
-    uint32_t mipLevels;
-    uint32_t width;
-    uint32_t height;
-    uint32_t depth;
-    VkImage image;
-    VkDeviceMemory imageMemory;
-    VkImageView imageView;
-    VkSampler imageSampler;
-    VkImageType imageType = VK_IMAGE_TYPE_2D;
-    VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D;
-    VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    void destroy();
-};
-struct VulkanTexture3D : VulkanTexture {
-    
-  //  VkImageType imageType = VK_IMAGE_TYPE_3D;
-  //  VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_3D;
-};
 
 struct Texture {
     const char* name;

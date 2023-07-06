@@ -2,6 +2,7 @@
 #include "Model.h"
 #include <stb_image.h>
 #include <glm/gtx/matrix_decompose.hpp>
+#include "ResourceManager.h"
 
 Loader::Loader(VulkanBase* base, Scene* scene) {
 	this->base = base;
@@ -51,9 +52,9 @@ void Loader::load(int path_count, const char* paths[])
             if (!rawtex.data) {
                 throw std::runtime_error("failed to load texture image!");
             }
-            base->vbuffer->createTexturefromBuffer(texture, rawtex.data);
+            PGEResourceTypes::Texture  ptexture=  base->vbuffer->createTexturefromBuffer(texture, rawtex.data);
             stbi_image_free(rawtex.data);
-            scene->textures.push_back(texture);
+            scene->ptextures.push_back(ptexture);
         }
         
         for (Object &object:modelData.objects) {

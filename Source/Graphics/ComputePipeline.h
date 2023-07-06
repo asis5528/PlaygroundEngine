@@ -21,6 +21,7 @@ public:
     VkDescriptorPool computeDescriptorPool;
     VkCommandBuffer computeCommandBuffer;
     VkFence computeFence;
+    VkShaderModule shaderModule;
     VulkanBase *base;
 
 

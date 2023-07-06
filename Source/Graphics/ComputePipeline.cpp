@@ -84,7 +84,7 @@ ComputePipeline::ComputePipeline(VulkanBase *base, ComputeInput input)
     createInfo.codeSize = computeShaderCode.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(computeShaderCode.data());
 
-    VkShaderModule shaderModule;
+   // VkShaderModule shaderModule;
     if (vkCreateShaderModule(base->device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
         throw std::runtime_error("failed to create shader module!");
     }
@@ -104,19 +104,12 @@ ComputePipeline::ComputePipeline(VulkanBase *base, ComputeInput input)
     computePipelineCreateInfo.layout = pipelineLayout;
     //  computePipelineCreateInfo.flags = 0;
     computePipelineCreateInfo.stage = shaderStage;
-
+    
     if (vkCreateComputePipelines(base->device, nullptr, 1, &computePipelineCreateInfo, nullptr, &computePipeline) != VK_SUCCESS) {
         throw std::runtime_error("failed to create compute pipeline!");
     }
-
-   
-
-
-    
 }
-ComputePipeline::~ComputePipeline() {
 
-}
 void ComputePipeline::setupDescriptors(std::vector <UBO> ubos, std::vector<VulkanTexture> textures, std::vector<SBO> sbos)
 {
 
@@ -296,4 +289,13 @@ void ComputePipeline::submit()
     if (vkQueueSubmit(base->queue, 1, &computeSubmitInfo, computeFence) != VK_SUCCESS) {
         throw std::runtime_error("failed to sumbit queue!");
     }
+}
+ComputePipeline::~ComputePipeline() {
+    vkDestroyShaderModule(base->device, shaderModule, nullptr);
+    vkDestroyDescriptorPool(base->device, computeDescriptorPool, nullptr);
+    vkDestroyDescriptorSetLayout(base->device, descriptorSetLayout, nullptr);
+    vkDestroyPipelineLayout(base->device, pipelineLayout, nullptr);
+    vkDestroyPipeline(base->device, computePipeline, nullptr);
+    vkDestroyFence(base->device, computeFence, nullptr);
+    vkDestroyCommandPool(base->device, commandPool, nullptr);
 }

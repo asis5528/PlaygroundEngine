@@ -20,6 +20,28 @@ private:
 	uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 };
+struct VulkanTexture {
+	uint32_t mipLevels;
+	uint32_t width;
+	uint32_t height;
+	uint32_t depth;
+	VkImage image;
+	VkDeviceMemory imageMemory;
+	VkImageView imageView;
+	VkSampler imageSampler;
+	//VulkanImage vimage;
+	VkImageType imageType = VK_IMAGE_TYPE_2D;
+	VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D;
+	VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	void destroy(VkDevice device);
+
+
+};
+struct VulkanTexture3D : VulkanTexture {
+
+	//  VkImageType imageType = VK_IMAGE_TYPE_3D;
+	//  VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_3D;
+};
 
 namespace Image {
 	VkImageView createImageView(VkDevice device, VkPhysicalDevice physicalDevice, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);

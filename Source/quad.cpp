@@ -9,6 +9,9 @@ Quad::Quad(VulkanBase* vbase,Framebuffer *fr)
 
 Quad::~Quad() {
     vkDestroyDescriptorPool(base->device, descriptorPool, nullptr);
+  //  for (VulkanTexture& tex : textures) {
+    //    vkDestroySampler(base->device, tex.imageSampler, nullptr);
+    //}
     //delete graphicsPipeline;
 }
 

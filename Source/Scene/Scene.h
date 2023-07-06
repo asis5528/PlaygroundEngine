@@ -6,6 +6,7 @@
 #include "../Material.h"
 #include "ScenePipelines.h"
 #include "../PostProcessing/PostProcessingManager.h"
+#include "../PGEResourceTypes.h"
 
 
 class Scene
@@ -13,7 +14,8 @@ class Scene
 	
 public:
 	std::vector<GraphicsPipeline*> pipelines;
-	std::vector<VulkanTexture> textures;
+	//std::vector<VulkanTexture> textures;
+	std::vector<PGEResourceTypes::Texture> ptextures;
 	std::vector<Material> materials;
 	std::vector<Mesh> meshes;
 	std::vector<Animation> animations;

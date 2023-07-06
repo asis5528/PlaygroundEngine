@@ -1,4 +1,5 @@
 #include "MeshToSdf.h"
+#include "../ResourceManager.h"
 
 
 MeshToSdf::MeshToSdf(VulkanBase* base, Scene* scene)
@@ -12,7 +13,11 @@ MeshToSdf::MeshToSdf(VulkanBase* base, Scene* scene)
 	input.descriptorTypes = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE ,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER };
 	comp = new ComputePipeline(base, input);
 }
-
+MeshToSdf::~MeshToSdf() {
+	delete comp;
+	//computeTexture.destroy(base->device);
+	//vkDestroySampler(base->device, computeTexture.imageSampler, nullptr);
+}
 void MeshToSdf::update(float time)
 {
 	static bool k = true;
@@ -26,12 +31,12 @@ void MeshToSdf::update(float time)
 			SBO sbo2;
 			sbo2.buffer = scene->meshes[1].indexBuffer;
 			sbo2.size = sizeof(scene->meshes[1].indices[0]) * scene->meshes[1].indices.size();
-		//	std::vector<SBO> sbos;
-			//sbos.push_back(sbo);
-			//sbo.size = scene->meshes[1].ve
-			comp->setupDescriptors({}, { computeTexture }, { sbo,sbo2 });
+
+			comp->setupDescriptors({}, { ResourceManager::getTexture(computeTexture.id) }, { sbo,sbo2 });
 			comp->dispatch(computeTexture.width / 8, computeTexture.height / 8, computeTexture.depth / 8);
 			comp->submit();
+			//vkDestroyBuffer(base->device, sbo.buffer, nullptr);
+		//	vkFreeMemory(base->device, sbo.bufferMemory, nullptr);
 		}
 		k = false;
 

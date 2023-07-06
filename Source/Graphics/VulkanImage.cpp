@@ -7,6 +7,13 @@
     this->device = device;
     this->physicalDevice = physicalDevice;
 }
+ void VulkanTexture::destroy(VkDevice device)
+ {
+     vkDestroyImageView(device, imageView, nullptr);
+     vkDestroyImage(device, image, nullptr);
+     vkFreeMemory(device, imageMemory, nullptr);
+ }
+
  void VulkanImage::destroy()
  {
      vkDestroyImageView(device, imageView, nullptr);
@@ -68,34 +75,7 @@ void VulkanImage::createImageView(VkFormat format, VkImageAspectFlags aspectFlag
 
    
 }
-VkSampler VulkanImage::createTextureSampler(uint32_t miplevels) {
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(this->physicalDevice, &properties);
 
-    VkSamplerCreateInfo samplerInfo{};
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_NEAREST;
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.anisotropyEnable = VK_TRUE;
-    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    samplerInfo.unnormalizedCoordinates = VK_FALSE;
-    samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = static_cast<float>(miplevels);
-    samplerInfo.mipLodBias = 0.0f;
-
-    VkSampler textureSampler;
-    if (vkCreateSampler(this->device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create texture sampler!");
-    }
-    return textureSampler;
-}
 
 uint32_t VulkanImage::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
     VkPhysicalDeviceMemoryProperties memProperties;

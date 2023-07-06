@@ -1,6 +1,7 @@
 #include "VulkanBuffer.h"
 #include <stdexcept>
 #include "VulkanImage.h"
+#include "../ResourceManager.h"
 
  VBuffer::VBuffer(VulkanDevice* vulkandevice) {
      this->vulkandevice = vulkandevice;
@@ -104,7 +105,7 @@ std::vector<UBO> VBuffer::createUniformBuffers(std::vector<uint64_t> Buffersize)
 }
 
 //Remove making sampler for each image,add a feature to initialize bunch of samplers at first and assigned them to different images
-void VBuffer::createTexturefromBuffer(VulkanTexture& texture,void *pixels) {
+PGEResourceTypes::Texture VBuffer::createTexturefromBuffer(VulkanTexture& texture,void *pixels) {
     VkDeviceSize imageSize = texture.width * texture.height * 4;
     VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
@@ -130,10 +131,16 @@ void VBuffer::createTexturefromBuffer(VulkanTexture& texture,void *pixels) {
     texture.imageView = vimage.imageView;
     texture.imageMemory = vimage.imageMemory;
     texture.imageSampler = createTextureSampler(texture.mipLevels);
+    PGEResourceTypes::Texture Ptexture;
+    Ptexture.id =  ResourceManager::addTexture(texture);
+    Ptexture.width = texture.width;
+    Ptexture.height = texture.height;
+    Ptexture.depth = texture.depth;
+    return Ptexture;
     // createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 }
 
-void VBuffer::createTexture3DfromBuffer(VulkanTexture3D& texture, void* pixels) {
+PGEResourceTypes::Texture3D VBuffer::createTexture3DfromBuffer(VulkanTexture3D& texture, void* pixels) {
     VkDeviceSize imageSize = texture.width * texture.height * texture.depth * 4;
     VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
@@ -159,11 +166,18 @@ void VBuffer::createTexture3DfromBuffer(VulkanTexture3D& texture, void* pixels) 
     texture.imageView = vimage.imageView;
     texture.imageMemory = vimage.imageMemory;
     texture.imageSampler = createTextureSampler(texture.mipLevels);
+    PGEResourceTypes::Texture3D Ptexture;
+    Ptexture.id = ResourceManager::addTexture(texture);
+    Ptexture.width = texture.width;
+    Ptexture.height = texture.height;
+    Ptexture.depth = texture.depth;
+    return Ptexture;
+
     // createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 }
 
 
-VulkanTexture3D VBuffer::createTexture3DGeneral(int w, int h, int d) {
+PGEResourceTypes::Texture3D VBuffer::createTexture3DGeneral(int w, int h, int d) {
     VulkanTexture3D texture;
     int width = w;
     int height = h;
@@ -188,8 +202,13 @@ VulkanTexture3D VBuffer::createTexture3DGeneral(int w, int h, int d) {
     texture.image = image.image;
     texture.imageView = image.imageView;
     texture.imageMemory = image.imageMemory;
-    texture.imageSampler = image.createTextureSampler(1);//miplevels as parameter btw
-    return texture;
+    texture.imageSampler = createTextureSampler(1);//miplevels as parameter btw
+    PGEResourceTypes::Texture3D Ptexture;
+    Ptexture.id = ResourceManager::addTexture(texture);
+    Ptexture.width = texture.width;
+    Ptexture.height = texture.height;
+    Ptexture.depth = texture.depth;
+    return Ptexture;
 
 
 
@@ -371,9 +390,9 @@ VkSampler VBuffer::createTextureSampler(uint32_t miplevels) {
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     samplerInfo.magFilter = VK_FILTER_LINEAR;
     samplerInfo.minFilter = VK_FILTER_LINEAR;
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     samplerInfo.anisotropyEnable = VK_TRUE;
     samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
     samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
@@ -389,5 +408,6 @@ VkSampler VBuffer::createTextureSampler(uint32_t miplevels) {
     if (vkCreateSampler(vulkandevice->device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
         throw std::runtime_error("failed to create texture sampler!");
     }
+    ResourceManager::addTextureSampler(textureSampler);
     return textureSampler;
 }

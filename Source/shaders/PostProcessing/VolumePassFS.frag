@@ -16,6 +16,7 @@ void main() {
 	outColor = texture(texSampler,vec3(uv,0));
 	outColor.a = 1.;
 	outColor.rgb*=outColor.a;
+	outColor.rgb = vec3(1.,0.,0.);
 	//optimized
 //	outColor = vec4(pow(texelFetch(depthSampler,ivec3(gl_FragCoord.xy,0),0).rrr,vec3(12.2)),1.); 
 	

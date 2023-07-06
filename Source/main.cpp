@@ -74,6 +74,7 @@ const bool enableValidationLayers = true;
 #include <glm/gtx/matrix_decompose.hpp>
 #include "Graphics/VulkanUtils.h"
 #include "ComputeShaderPipelines.h"
+#include "ResourceManager.h"
 
 
 
@@ -112,7 +113,6 @@ private:
   //  Quad *quad;
     int computeDimension[3] = { 128,128,128 };
 
-    ComputePipeline *comp;
     ComputeShaderPipelines *clines;
     void initWindow() {
         glfwInit();
@@ -171,12 +171,16 @@ private:
 
         base = new VulkanBase();
         base->init(window);
+        ResourceManager::setVulkanBase(base);
+       // ResourceManager& resourceManager = ResourceManager::getInstance();
         scene = new Scene(base);
         loader = new Loader(base, scene);
         editorGui = new EditorGui(scene,base);
        
-        scene->textures.push_back(createTexture(TEXTURE_PATH.c_str()));
-        scene->textures.push_back(createTexture(TEXTURE_PATH2.c_str()));
+        //ResourceManager::addTexture(createTexture(TEXTURE_PATH.c_str()));
+        scene->ptextures.push_back(createTexture(TEXTURE_PATH.c_str()));
+      //  ResourceManager::addTexture(createTexture(TEXTURE_PATH2.c_str()));
+        scene->ptextures.push_back(createTexture(TEXTURE_PATH2.c_str()));
         //scene->textures.push_back(createTexture3D());
        
         scene->init();
@@ -204,7 +208,7 @@ private:
         Material material;
         material.type = TexturedMaterial;
         MaterialTexturedData* matData = new MaterialTexturedData();
-        matData->DiffuseTexture = scene->textures.size()-1;
+        matData->DiffuseTexture = scene->ptextures.size()-1;
         material.materialData = matData;
         scene->materials.push_back(material);
         scene->meshes[scene->objects[0].meshID[0]].matID = scene->materials.size() - 1;
@@ -286,10 +290,12 @@ private:
     void cleanup() {
 
         vr::VR_Shutdown();
-        vkDestroyImageView(base->device,ct3D.imageView, nullptr);
-        vkDestroyImage(base->device, ct3D.image, nullptr);
-        vkFreeMemory(base->device, ct3D.imageMemory, nullptr);
-
+     //   vkDestroyImageView(base->device,ct3D.imageView, nullptr);
+       // vkDestroyImage(base->device, ct3D.image, nullptr);
+        //vkFreeMemory(base->device, ct3D.imageMemory, nullptr);
+        delete clines;
+        ResourceManager::cleanTextures();
+        ResourceManager::cleanTextureSamplers();
         scene->clean();;
         delete vulkanImgui;
         delete base;
@@ -323,7 +329,7 @@ private:
         
     }
 
-    VulkanTexture createTexture(const char* path) {
+    PGEResourceTypes::Texture createTexture(const char* path) {
         VulkanTexture texture;
         int texWidth, texHeight, texChannels;
         stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -336,9 +342,9 @@ private:
         if (!pixels) {
             throw std::runtime_error("failed to load texture image!");
         }
-        base->vbuffer->createTexturefromBuffer(texture, pixels);
+        PGEResourceTypes::Texture t = base->vbuffer->createTexturefromBuffer(texture, pixels);
         stbi_image_free(pixels);
-        return texture;
+        return t;
 
     }
     //remove below function
@@ -733,7 +739,7 @@ private:
         VRsetup();
 #endif
         scene->update(iTime);
-
+        //ResourceManager::base;
 
         updateUniformBuffer(0);
 
